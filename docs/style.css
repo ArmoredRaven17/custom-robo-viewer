@@ -1,0 +1,138 @@
+/* The game's own message font (message/font.out), converted to a web font by the extract tools; it lives in
+   data/ like every other game-derived file. Characters it lacks fall back to the system font. */
+@font-face{font-family:"CR Message";src:url("data/fonts/message_font.woff") format("woff");font-display:swap}
+:root{
+  --bg:#3e3e3e; --bg1:#000; --bg2:#333; --hover:#2f2f2f; --cta:#19e0d2;
+  --text:#f3f3f3; --hint:#b9b9b9; --stage:#0e1013; --line:#ffffff1f;
+  --theme:#7B0808;   /* player theme (P1 red; app.js switches P1-P4): panel outlines, headers, title bar */
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:"CR Message","Segoe UI",system-ui,sans-serif;font-synthesis:none;background:var(--bg);color:var(--text);font-size:13px}
+#app{display:flex;flex-direction:column;height:100%}
+.titlebar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--theme);border-bottom:1px solid #0008}
+.titlebar h1{text-shadow:0 1px 0 #000,1px 0 0 #000,0 -1px 0 #000,-1px 0 0 #000}
+.titlebar .btn:not(.cta){background:#1d1d1d;border-color:#ffffff40}
+.titlebar .btn:not(.cta):hover{background:#2e2e2e}
+.titlebar h1{font-size:15px;font-weight:600;margin:0;flex:1}
+.layout{display:flex;flex:1;min-height:0}
+.sidebar{width:300px;flex:none;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px;background:#000;
+  border-right:1px solid var(--line)}
+.stage{flex:1;position:relative;background:var(--stage);min-width:0}
+#view{width:100%;height:100%;display:block}
+.status{position:absolute;left:12px;bottom:10px;color:var(--hint);font-size:12px;pointer-events:none}
+/* Panels: square-cornered with a --panel-edge outline (red: Raven, 2026-11-26), filled with Raven's UI texture
+   (App Textures/Background.tif -> data/ui/panel_bg.png) tiled 1:1 and darkened by --panel-shade. */
+.panel{border:var(--panel-edge-w) solid var(--panel-edge);border-radius:0;overflow:clip;
+  background:linear-gradient(var(--panel-shade),var(--panel-shade)),url("data/ui/panel_bg.png") repeat left top,var(--bg2);
+  background-size:auto,var(--panel-tex-size,auto),auto;image-rendering:pixelated}
+/* --panel-tex-size is set by app.js so one texture pixel covers a whole number of screen pixels at any
+   devicePixelRatio (at 1.5, 1 px rows otherwise alternate 1 and 2 screen pixels: light and dark bands). */
+.panel-head{width:100%;text-align:left;background:transparent;border:none;color:var(--text);font:inherit;
+  font-weight:600;padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between}
+.panel-head:hover{background:#ffffff0d}
+.panel-body{display:none;padding:8px 12px 12px;flex-direction:column;gap:8px}
+.panel[data-open="true"] .panel-body{display:flex}
+.panel[data-open="false"] .chev{transform:rotate(-90deg)}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.hint{color:var(--hint);font-size:12px;line-height:1.35}
+select{width:100%;background:#1d1d1d;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 6px;font:inherit}
+.slot{display:grid;grid-template-columns:44px 1fr;align-items:center;gap:8px}
+.check{display:flex;gap:8px;align-items:center;cursor:pointer}
+.btn{background:#ffffff14;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 12px;
+  font:inherit;cursor:pointer}
+.btn:hover{background:#ffffff24}
+.btn.tiny{padding:3px 10px;font-size:12px}
+.btn.cta{background:var(--cta);color:#062b29;font-weight:600;border-color:#0006}
+.icon-btn{background:none;border:none;color:var(--text);font-size:17px;cursor:pointer;padding:0 4px}
+.swatches{gap:8px;justify-content:center}
+.swatch{width:28px;height:28px;border-radius:50%;border:2px solid #0008;cursor:pointer;padding:0}
+.swatch.on{outline:2px solid #fff;outline-offset:2px}
+dialog{background:var(--bg2);color:var(--text);border:1px solid var(--line);border-radius:10px;max-width:520px}
+dialog::backdrop{background:#0008}
+dialog h2{margin-top:0;font-size:16px}
+body.booting .sidebar{opacity:.5;pointer-events:none}
+
+.anim { margin-top: 8px; }
+.anim input[type=range] { width: 100%; margin: 6px 0 2px; }
+.anim select { width: auto; }
+
+.motions { flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.motbtn.on { outline: 1px solid var(--accent, #3cc); }
+
+/* buttons and inputs use the page font (browsers default them to the system font) */
+button,select,input,textarea{font-family:inherit}
+
+/* Readability on the striped panel texture: a dark outline on panel text, hints on a translucent dark backing,
+   and solid dark buttons (as the dropdowns already are). */
+.panel{--hint:#e2e2e2;--panel-edge:var(--theme);--panel-edge-w:4px;--panel-shade:#00000070}
+.panel-head,.panel .slot>span,.panel .check,.panel .hint{text-shadow:0 1px 0 #000,1px 0 0 #000,0 -1px 0 #000,-1px 0 0 #000}
+.panel .hint{background:#000000a0;border-radius:6px;padding:5px 8px}
+.panel .btn:not(.cta){background:#1d1d1d;border-color:#ffffff40}
+.panel .btn:not(.cta):hover{background:#2e2e2e}
+.panel .btn:disabled{opacity:.55}
+.panel select{border-color:#ffffff40}
+
+/* Panel header bars (the clickable "Robo / Parts / View" buttons): solid --panel-head-fill, the outline red. */
+.panel{--panel-head-fill:var(--panel-edge)}
+.panel .panel-head{background:var(--panel-head-fill)}
+.panel .panel-head:hover{background:color-mix(in srgb,var(--panel-head-fill) 85%,#fff)}
+.panel .panel-head{text-transform:uppercase}
+/* A rule from the end of the title to the panel edge (before the collapse arrow) */
+.panel .panel-head{align-items:center;gap:8px;justify-content:flex-start}
+.panel .panel-head::after{content:"";order:1;flex:1;height:2px;background:currentColor;box-shadow:0 1px 0 #000;opacity:.9}
+.panel .panel-head .chev{order:2}
+/* Soft glow on the header title and its rule (--panel-glow) */
+.panel{--panel-glow:#ffffffe0}
+.panel .panel-head{text-shadow:0 1px 0 #000,1px 0 0 #000,0 -1px 0 #000,-1px 0 0 #000,0 0 8px var(--panel-glow),0 0 3px var(--panel-glow)}
+.panel .panel-head::after{box-shadow:0 1px 0 #000,0 0 8px var(--panel-glow),0 0 3px var(--panel-glow)}
+/* small sub-headings inside a panel (Animation: Robo pose / Part animations) */
+.panel .sub{font-size:12px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;
+  text-shadow:0 1px 0 #000,1px 0 0 #000,0 -1px 0 #000,-1px 0 0 #000}
+.panel .anim{margin-top:0}
+
+/* Stat charts in the game's sprites: sizes in sprite pixels x --stat-k (set by app.js) */
+.statchart{--k:var(--stat-k,1.33);width:calc(181px*var(--k));margin:2px auto 0}
+.statchart[hidden]{display:none}
+.statchart .bars{position:relative;height:calc(25px*var(--k))}
+.statchart .col{position:absolute;bottom:0;left:calc((var(--i)*37px + 2px)*var(--k));width:calc(25px*var(--k));height:100%}
+.statchart .fill{position:absolute;bottom:0;left:0;width:100%;height:calc(var(--h)*1px*var(--k));
+  background-repeat:no-repeat;background-position:left bottom;background-size:100% calc(25px*var(--k));image-rendering:pixelated}
+.statchart .labels{display:block;width:calc(181px*var(--k));height:calc(8px*var(--k));margin-top:calc(3px*var(--k));image-rendering:pixelated}
+
+/* Robo picker: family dropdown, then one button per robo with the game's type badge */
+.robo-opts{display:flex;flex-direction:column;gap:4px}
+.robo-opt{display:flex;align-items:center;gap:10px;background:#1d1d1d;color:var(--text);border:1px solid #ffffff40;
+  border-radius:6px;padding:5px 8px;cursor:pointer;font:inherit;text-align:left}
+.robo-opt:hover{background:#2e2e2e}
+.robo-opt.on{border-color:var(--cta);box-shadow:0 0 0 1px var(--cta) inset}
+.robo-opt .type-badge{height:calc(9px*var(--stat-k,1.33));image-rendering:pixelated;flex:none;width:calc(80px*var(--stat-k,1.33));
+  object-fit:contain;object-position:left center}
+.robo-opt span{text-shadow:0 1px 0 #000,1px 0 0 #000,0 -1px 0 #000,-1px 0 0 #000}
+/* the game's own category words (custom.tpl 70-74) as the robo and part-row labels, crisp at --stat-k */
+.slot .slot-label{display:block;height:calc(14px*var(--stat-k,1.33));image-rendering:pixelated}
+.panel .slot{grid-template-columns:calc(56px*var(--stat-k,1.33)) 1fr}
+.statchart .labels.blank{background:none}
+.statchart .track{position:absolute;inset:0;background-repeat:no-repeat;background-size:100% 100%;image-rendering:pixelated;opacity:.22}
+.statchart .labels.faded{opacity:.22}
+/* < Part Name > cycler above the part stat chart */
+.stat-cycle{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px}
+.stat-cycle .sub{text-align:center;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-cycle .cyc{background:#1d1d1d;color:var(--text);border:1px solid #ffffff40;border-radius:6px;font:inherit;
+  width:26px;height:22px;line-height:1;cursor:pointer;padding:0}
+.stat-cycle .cyc:hover{background:#2e2e2e}
+.hint[hidden]{display:none}
+/* player theme button (title bar): the game's 1P-4P icon */
+.theme-btn{background:none;border:none;padding:0 4px;cursor:pointer;display:flex;align-items:center}
+.theme-btn img{height:26px;display:block;filter:drop-shadow(0 1px 1px #0008)}
+.theme-btn:hover img{filter:drop-shadow(0 0 4px #fff8)}
+
+/* Scrollbars: black track, thumb and arrow buttons in the player theme colour */
+/* scrollbar-color would override the ::-webkit-scrollbar styles in Chromium, so only browsers without them get it */
+@supports not selector(::-webkit-scrollbar){*{scrollbar-color:var(--theme) #000}}
+::-webkit-scrollbar{width:12px;height:12px;background:#000}
+::-webkit-scrollbar-track{background:#000}
+::-webkit-scrollbar-thumb{background:var(--theme);border:2px solid #000;border-radius:0}
+::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--theme) 80%,#fff)}
+::-webkit-scrollbar-button{background:var(--theme);height:12px}
+::-webkit-scrollbar-corner{background:#000}

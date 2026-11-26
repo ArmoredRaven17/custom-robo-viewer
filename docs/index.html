@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Custom Robo Viewer</title>
+<link rel="stylesheet" href="style.css?v=34">
+</head>
+<body class="booting">
+<div id="app">
+  <header class="titlebar">
+    <h1>Custom Robo Viewer</h1>
+    <button id="themeBtn" class="theme-btn" title="Player colour: P1" aria-label="Player colour theme"><img id="themeIcon" src="data/ui/theme_p1.png" alt="1P"></button>
+    <button id="shotBtn" class="btn tiny" title="Save a PNG of the view">Screenshot</button>
+    <button id="saveBtn" class="btn tiny" title="Save this loadout as a .json file">Save</button>
+    <button id="openBtn" class="btn tiny" title="Open a saved loadout">Open</button>
+    <button id="resetBtn" class="btn tiny cta" title="Ray 01 with the starter parts">Reset</button>
+    <input type="file" id="openFile" accept=".json" hidden>
+    <button id="aboutBtn" class="icon-btn" title="About" aria-label="About">&#9432;</button>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="panel" data-open="true">
+        <button class="panel-head">Robo <span class="chev">&#9662;</span></button>
+        <div class="panel-body">
+          <label class="slot"><span><img class="slot-label" src="data/ui/custom_74.png" alt="Body"></span><select id="familySel" title="Body family"></select></label>
+          <div class="robo-opts" id="roboOpts"></div>
+          <div class="statchart" id="roboStats"></div>
+          <div class="row swatches" id="swatches" title="Colour"></div>
+          <div class="hint" id="roboDesc"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-open="true">
+        <button class="panel-head">Parts <span class="chev">&#9662;</span></button>
+        <div class="panel-body">
+          <label class="slot"><span><img class="slot-label" src="data/ui/custom_71.png" alt="Gun"></span><select id="sel-gun"></select></label>
+          <label class="slot"><span><img class="slot-label" src="data/ui/custom_70.png" alt="Bomb"></span><select id="sel-bomb"></select></label>
+          <label class="slot"><span><img class="slot-label" src="data/ui/custom_73.png" alt="Pod"></span><select id="sel-pod"></select></label>
+          <label class="slot"><span><img class="slot-label" src="data/ui/custom_72.png" alt="Legs"></span><select id="sel-legs"></select></label>
+          <div class="row"><button id="randBtn" class="btn tiny" title="Pick a random loadout">Random</button>
+            <button id="clearBtn" class="btn tiny" title="Unequip every part">Unequip all</button></div>
+          <div class="stat-cycle">
+            <button class="cyc" id="statPrev" title="Previous part's stats" aria-label="Previous part's stats">&lt;</button>
+            <div class="sub" id="partStatsTitle"></div>
+            <button class="cyc" id="statNext" title="Next part's stats" aria-label="Next part's stats">&gt;</button>
+          </div>
+          <div class="statchart" id="partStats"></div>
+          <div class="hint" id="partDesc"></div>
+        </div>
+      </section>
+
+      <section class="panel" data-open="true">
+        <button class="panel-head">Animation <span class="chev">&#9662;</span></button>
+        <div class="panel-body">
+          <div class="sub">Robo pose</div>
+          <div class="row motions">
+            <button id="motIdle" class="btn tiny motbtn" data-m="idle" title="The stance the robo idles in">Idle</button>
+            <button id="motGun" class="btn tiny motbtn" data-m="gun" title="The gun-drawn stance (shown when a gun is picked)">Gun drawn</button>
+            <button id="motBomb" class="btn tiny motbtn" data-m="bomb" title="The bomb-drawn stance (shown when a bomb is picked)">Bomb drawn</button>
+            <button id="motFly" class="btn tiny motbtn" data-m="fly" title="Transform to flying mode (Lightning Sky bodies and Ruhiel)" hidden>Fly</button>
+          </div>
+          <div class="sub">Part animations</div>
+          <div class="anim">
+            <div class="row"><button id="animPlay" class="btn tiny" title="Play each part's action clip from frame 0; it holds the last frame">Play</button>
+              <select id="animSpeed" title="Playback speed"><option value="0.125">1/8&times;</option><option value="0.25" selected>1/4&times;</option><option value="0.5">1/2&times;</option><option value="1">1&times;</option></select>
+              <button id="animRest" class="btn tiny" title="Back to each part's deployed pose (its clip's last frame)">Rest</button></div>
+            <input type="range" id="animFrame" min="0" max="10" step="0.25" value="10" title="Part animation frame">
+            <div class="hint" id="animLabel"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-open="true">
+        <button class="panel-head">View <span class="chev">&#9662;</span></button>
+        <div class="panel-body">
+          <label class="check"><input type="checkbox" id="optSpin"> Turntable</label>
+          <label class="check"><input type="checkbox" id="optGrid" checked> Floor grid</label>
+          <label class="check"><input type="checkbox" id="optWire"> Wireframe</label>
+          <label class="check"><input type="checkbox" id="optBones"> Skeleton</label>
+          <label class="check"><input type="checkbox" id="optIllegal" checked> List illegal parts</label>
+          <div class="row"><button id="frontBtn" class="btn tiny">Front</button><button id="sideBtn" class="btn tiny">Side</button>
+            <button id="backBtn" class="btn tiny">Back</button></div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="stage">
+      <canvas id="view"></canvas>
+      <div id="status" class="status"></div>
+    </section>
+  </main>
+</div>
+
+<dialog id="about">
+  <h2>Custom Robo Viewer</h2>
+  <p>Robos and parts from <i>Custom Robo</i> (GameCube, USA, GXCE01), read from the disc by the tools in
+  <code>F:\Custom Robo Extract</code>: HAL Sysdolphin models, GX textures and the game's own names.</p>
+  <p><b>Placement</b> is read from the game's battle code. Each part root is placed on a robo bone (gun: right
+  forearm, bomb: left forearm, pods: torso, legs: both knees and feet), offset and scaled by that robo's own mount
+  record. Parts idle in their rest pose. Each part's own action clip is decoded from the game's keyframes; play it or scrub it under Animation (Rest returns to the rest pose).</p>
+  <p><b>Motions</b>: Idle, Gun drawn and Bomb drawn are the stances the game's parts menu plays (read from its code);
+  choosing the Gun or Bomb list switches to its stance and the others to idle, as the menu's cursor does. The poses are
+  built by a translation of the game's own pose code from its motion data, each robo's proportions and hip height.</p>
+  <form method="dialog"><button class="btn tiny">Close</button></form>
+</dialog>
+
+<script type="importmap">
+{"imports":{
+  "three":"./vendor/three/build/three.module.js",
+  "three/addons/":"./vendor/three/examples/jsm/"
+}}
+</script>
+<script type="module" src="app.js?v=28"></script>
+</body>
+</html>

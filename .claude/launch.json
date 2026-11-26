@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "custom-robo-viewer",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5660", "--directory", "docs"],
+      "port": 5660
+    }
+  ]
+}
