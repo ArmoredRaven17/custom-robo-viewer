@@ -97,6 +97,7 @@ export class Mover {
 
   /** Homing (phases 0-1): turn the flat dir toward the target by at most the body's step per tick. */
   home(C) {
+    if (this.ctx.targetShown && !this.ctx.targetShown()) return;     // no target shown: straight on
     const G = this.ctx.target().clone().sub(this.ctx.position()); G.normalize(); G.y = 0;
     if (G.lengthSq() < 1e-12) return;
     const lim = C.homing_step_actual_rad, d = this.dir.clone().normalize();
@@ -127,7 +128,7 @@ export class Mover {
     if (this.state === 'charge' && this.phase === 1 && !this.hit && !C.no_hit_bit3) {
       const P = this.ctx.position().clone().addScaledVector(this.dir.clone().setY(0).normalize(), C.hit_point_forward_units);
       P.y += C.hit_point_up_units;
-      if (P.distanceTo(this.ctx.target()) < C.hit_range_units + this.ctx.targetRadius()) {
+      if ((!this.ctx.targetShown || this.ctx.targetShown()) && P.distanceTo(this.ctx.target()) < C.hit_range_units + this.ctx.targetRadius()) {
         this.hit = true; this.hitstop = C.hitstop_ticks;
         this.ctx.onCharge && this.ctx.onCharge('hit', this);
       }

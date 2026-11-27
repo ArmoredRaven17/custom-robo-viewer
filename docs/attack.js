@@ -579,9 +579,9 @@ export class GunAttack {
         p.dir.applyAxisAngle(U, b.random_spread_bams * BAMS * rnd());
       }
     }
-    // homing toward the target point
+    // homing toward the target point (no target shown: nothing to home on, the round flies straight)
     const v = new THREE.Vector3().subVectors(this.target, p.pos);
-    if (v.lengthSq() > 0 && (!p.ahead || v.dot(p.dir) > 0) && (ph.homing_yaw_rad || ph.homing_pitch_rad)) {
+    if (this.shown && v.lengthSq() > 0 && (!p.ahead || v.dot(p.dir) > 0) && (ph.homing_yaw_rad || ph.homing_pitch_rad)) {
       v.normalize();
       const a = new THREE.Vector3(v.x, 0, v.z), c = new THREE.Vector3(p.dir.x, 0, p.dir.z);
       if (a.lengthSq() > 1e-12 && c.lengthSq() > 1e-12) {
@@ -612,7 +612,7 @@ export class GunAttack {
     }
     const seg = new THREE.Line3(p.old, p.pos), cp = new THREE.Vector3();
     seg.closestPointToPoint(this.target, true, cp);
-    if (cp.distanceTo(this.target) < this.targetRadius + ph.radius) {
+    if (this.shown && cp.distanceTo(this.target) < this.targetRadius + ph.radius) {
       // robo hit: the hit effect (archive 1 ModelSet 0) at centre + normalize(pos - centre) * radius
       const at = cp.clone().sub(this.target);
       if (at.lengthSq() < 1e-12) at.copy(p.dir).negate();

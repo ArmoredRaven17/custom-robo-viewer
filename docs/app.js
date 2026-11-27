@@ -5,11 +5,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
-import { GunAttack, EffectLib, setParticles } from './attack.js?v=15';
-import { BombAttack, PodAttack } from './throw.js?v=12';
+import { GunAttack, EffectLib, setParticles } from './attack.js?v=16';
+import { BombAttack, PodAttack } from './throw.js?v=13';
 import { ParticleSystem } from './particles.js?v=2';
-import { Mover } from './move.js?v=4';
-import { effectInstance } from './attack.js?v=15';
+import { Mover } from './move.js?v=5';
+import { effectInstance } from './attack.js?v=16';
 
 const SLOTS = ['gun', 'bomb', 'pod', 'legs'];
 // Player colour themes (the game gives each player one of four colours); icons from App Textures/Theme Icons.tif
@@ -347,6 +347,7 @@ const mover = new Mover({
   position: () => new THREE.Vector3(home.x + mover.pos.x, mover.pos.y, home.z + mover.pos.z),
   target: () => attack.target,
   targetRadius: () => attack.targetRadius,
+  targetShown: () => attack.shown,
   onCharge: (ev, m) => chargeEvent(ev, m),
   onPose: (name, frame, fade) => {
     if (acting()) return;                       // an attack's own pose (recoil, throw) wins

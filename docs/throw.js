@@ -17,7 +17,7 @@
 // Viewer stand-ins (not read): no walls, arena edge or aim steering; the target is the gun preview's sphere (hit
 // centre) with its feet on the floor; the blast animation rate (0.5 frames/tick) and the bomb's (1.5) are INFERRED.
 import * as THREE from 'three';
-import { effectInstance } from './attack.js?v=15';
+import { effectInstance } from './attack.js?v=16';
 
 const TICK = 1 / 60;
 const UP = new THREE.Vector3(0, 1, 0);
@@ -148,7 +148,7 @@ class ThrowBase {
   }
 
   stepExplosions() {
-    for (const e of this.explosions) if (e.active) e.update(this.target, h => this.ctx.onHit && this.ctx.onHit(h));
+    for (const e of this.explosions) if (e.active) e.update(this.ctx.gun.shown ? this.target : null, h => this.ctx.onHit && this.ctx.onHit(h));
     this.explosions = this.explosions.filter(e => e.active);
   }
 
@@ -219,6 +219,7 @@ export class BombAttack extends ThrowBase {
   }
 
   near(pos, r, id) {
+    if (!this.ctx.gun.shown) return false;                              // no target shown: nothing to go off near
     const c = this.target;
     if (c.distanceTo(pos) < r) return true;
     return id === 14 && c.distanceTo(pos.clone().sub(UP)) < r;          // Tomahawk B: also 1 unit below
@@ -349,6 +350,7 @@ export class PodAttack extends ThrowBase {
   }
 
   proximity(it) {
+    if (!this.ctx.gun.shown) return false;
     const pr = it.pd.proximity, d = this.targetFeet().sub(it.pos);
     if (d.x * d.x + d.z * d.z >= pr.radius * pr.radius) return false;
     return pr.asymmetric ? d.y > -0.65 && d.y < pr.height : Math.abs(d.y) < pr.height;
@@ -367,7 +369,8 @@ export class PodAttack extends ThrowBase {
     it.frame += POD_RATE;
     let k = it.locked ? 1 : 0;
     if (it.launch < 1) {
-      const v = this.targetFeet().sub(it.pos); v.y = 0;
+      // no target shown: no lock and nothing to turn toward (v = the heading itself)
+      const v = this.ctx.gun.shown ? this.targetFeet().sub(it.pos) : it.heading.clone().multiplyScalar(1e3); v.y = 0;
       const ang = v.lengthSq() ? THREE.MathUtils.radToDeg(v.angleTo(it.heading)) : 0;
       const locked = pd.lock.enabled && v.length() < pd.lock.range && ang < pd.lock.view_angle_deg;
       if (locked && !it.locked) it.pause = pd.lock.pause_ticks;
