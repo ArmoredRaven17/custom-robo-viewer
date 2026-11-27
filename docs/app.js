@@ -128,7 +128,6 @@ function eachMaterial(obj, fn) {
 // ---- robo ----------------------------------------------------------------------------------------
 async function setRobo(i) {
   const r = index.robos[i];
-  status(`Loading ${r.name}…`);
   const obj = await loadGlb(r.glb);
   if (state.robo !== i) return;
   // materials are cloned per load so colour swaps never touch the cache
