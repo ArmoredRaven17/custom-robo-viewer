@@ -163,3 +163,10 @@ button,select,input,textarea{font-family:inherit}
 .loadouts .tag{color:var(--hint);font-size:12px;white-space:nowrap}
 .loadouts input{flex:1;min-width:0;background:#1d1d1d;color:var(--text);border:1px solid var(--line);border-radius:4px;
   font:inherit;padding:2px 4px}
+
+/* "Loading..." over the render area until the first robo is drawn, and while a robo or load out swaps in
+   (as the MHGU viewers' loading screen; app.js setLoading). The panels lock with it. */
+#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--stage);
+  color:var(--hint);font-size:15px;letter-spacing:.06em;pointer-events:none}
+#loading[hidden]{display:none}
+body.loading .sidebar{opacity:.5;pointer-events:none}

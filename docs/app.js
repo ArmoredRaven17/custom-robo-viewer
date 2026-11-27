@@ -891,9 +891,21 @@ function resize() {
   }
 }
 
+// ---- Loading screen (as the MHGU viewers): "Loading..." over the render area, and nothing drawn, until the first robo
+// is dressed and its camera set (`booted`), and again while a robo or load out swaps in, so the half-built robo is never
+// seen. Counted, so nested holds (a load out switch applying a new robo) cannot leave it stuck on.
+let booted = false, loadHold = 0;
+function setLoading(on) {
+  loadHold = Math.max(0, loadHold + (on ? 1 : -1));
+  const show = !booted || loadHold > 0;
+  $('loading').hidden = !show;
+  document.body.classList.toggle('loading', show && booted);   // before boot the 'booting' class already locks the panels
+}
+
 const clock = new THREE.Clock();
 function loop() {
   const dt = Math.min(clock.getDelta(), 0.1);
+  if (!booted || loadHold > 0) { clock.getDelta(); requestAnimationFrame(loop); return; }   // held: no frames advance
   if (window.__freeze) renderer.render(scene, camera);   // test hook: frames advance only through frameStep
   else frameStep(dt);
   requestAnimationFrame(loop);
@@ -1088,9 +1100,21 @@ const loadouts = {
   write() {
     try { localStorage.setItem(LO_KEY, JSON.stringify({ list: this.list, index: this.index })); } catch (e) { /* private mode */ }
   },
+  // The camera is kept RELATIVE TO THE ROBO: it follows the robo through jumps, dashes, the charge and the Down lift, so
+  // a world-space save taken mid-move came back on reload (robo at home again) somewhere off to the side or up high.
   snapshot() {
+    const r = home.last;                 // where the camera's follow last put the robo (stepRobo)
     return { state: { ...state }, pose: roboAnim.selected || 'idle',
-             camera: { pos: camera.position.toArray(), target: controls.target.toArray() } };
+             camera: { rel: true, pos: camera.position.clone().sub(r).toArray(), target: controls.target.clone().sub(r).toArray() } };
+  },
+  /** Put back a saved camera around where the robo is now. Older saves (world space, maybe mid-move) are not trusted:
+   *  the robo's own framing stays. */
+  restoreCamera(c) {
+    if (!c || !c.rel || !Array.isArray(c.pos) || !Array.isArray(c.target)) return;
+    const r = home.last;                 // where the camera's follow last put the robo (stepRobo)
+    camera.position.fromArray(c.pos).add(r);
+    controls.target.fromArray(c.target).add(r);
+    controls.update();
   },
   bank() {
     if (!this.ready || this.busy || !this.list[this.index]) return;
@@ -1114,14 +1138,15 @@ const loadouts = {
     if (!x || this.busy || (k === this.index && !opt.force)) return;
     if (!opt.noBank) this.bank();
     this.busy = true;
+    setLoading(true);
     try {
       this.index = k;
       this.paint();
       attack.clear(); bombs.clear(); pods.clear(); returnHome();
       await apply({ ...DEFAULT, ...x.state });
       if (x.pose && roboAnim.actions[x.pose]) { playMotion(x.pose, 0); $('motionSel').value = x.pose; updateDownLift(); }
-      if (x.camera) { camera.position.fromArray(x.camera.pos); controls.target.fromArray(x.camera.target); controls.update(); }
-    } finally { this.busy = false; }
+      this.restoreCamera(x.camera);
+    } finally { this.busy = false; setLoading(false); }
     this.bank();
   },
   /** Start-up: the saved load outs, or one from the page. A link carrying a different robo becomes a new load out. */
@@ -1154,8 +1179,10 @@ async function apply(next) {
   fillRobo();
   fillParts();
   writeHash();
-  if (roboChanged) await setRobo(state.robo);
-  else {
+  if (roboChanged) {
+    setLoading(true);
+    try { await setRobo(state.robo); } finally { setLoading(false); }
+  } else {
     applyColour();
     for (const s of SLOTS) await setPart(s, state[s]);
   }
@@ -1383,12 +1410,14 @@ async function main() {
   loadouts.ready = true;
   const lo = loadouts.list[loadouts.index];
   if (lo && lo.pose && lo.pose !== 'idle' && roboAnim.actions[lo.pose]) { playMotion(lo.pose, 0); $('motionSel').value = lo.pose; updateDownLift(); }
-  if (lo && lo.camera) { camera.position.fromArray(lo.camera.pos); controls.target.fromArray(lo.camera.target); controls.update(); }
+  if (lo) loadouts.restoreCamera(lo.camera);
   loadouts.bank();
   showPartStats();
   bombs.load().then(buildDummy).catch(err => console.error('target dummy', err));
   document.body.classList.remove('booting');
+  booted = true;
+  setLoading(false);         // no holds and booted: the overlay goes
   requestAnimationFrame(loop);
 }
 main().catch(err => { status('Failed to load: ' + err.message); console.error(err); });
-window.__viewer = { loadouts, frameStep, mover, charge, chargePress, legFx, moveTick, jumpPress, updateFloor, idleFloor, get floorY() { return floorY; }, grid, attack, bombs, pods, particles, state, get index() { return index; }, partObj, partAnim, get robo() { return roboObj; }, rig, camera, roboAnim, gaitFor };
+window.__viewer = { loadouts, setLoading, frameStep, mover, charge, chargePress, legFx, moveTick, jumpPress, updateFloor, idleFloor, get floorY() { return floorY; }, grid, attack, bombs, pods, particles, state, get index() { return index; }, partObj, partAnim, get robo() { return roboObj; }, rig, camera, roboAnim, gaitFor };
