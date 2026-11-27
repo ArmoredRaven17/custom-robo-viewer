@@ -6,7 +6,7 @@ The App Textures folder is where source art is collected; the app never reads it
 then commit docs/ui. Sources that are missing are reported and their docs/ui copy is left as it is.
 
     Background.tif       -> panel_bg.png     panel tile, cropped to whole repeat periods (no seam)
-    NavBackground.tif    -> nav_bg.png       sidebar tile, cropped the same way
+    Test Tex.png         -> nav_bg.png       sidebar tile (circuit board), cropped the same way
     TitleBackground.tif  -> title_bg.png     title bar sheen
     Theme Icons.tif      -> theme_p1..4.png  1P..4P, split from the stacked sheet, white sheet made transparent
 """
@@ -21,7 +21,7 @@ from build_viewer import white_to_alpha  # noqa: E402
 
 APP_TEX = os.environ.get("CR_APP_TEX", r"F:\Custom Robo Extract\App Textures")
 DST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "ui")
-TILES = {"Background.tif": "panel_bg.png", "NavBackground.tif": "nav_bg.png", "TitleBackground.tif": "title_bg.png"}
+TILES = {"Background.tif": "panel_bg.png", "Test Tex.png": "nav_bg.png", "TitleBackground.tif": "title_bg.png"}
 # Theme Icons.tif: 1P..4P stacked on an opaque white sheet; split at the white gaps
 THEME_SHEET = "Theme Icons.tif"
 THEME_BANDS = [(0, 86), (86, 172), (172, 258), (258, 346)]

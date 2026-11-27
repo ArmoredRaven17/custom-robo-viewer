@@ -68,7 +68,7 @@ scene.add(grid);
 // ---- UI textures: crisp at any pixel ratio ----------------------------------------------------------
 // Each texture pixel is drawn as round(devicePixelRatio) screen pixels, so the stripes stay even.
 // panel_bg.png fills the panels (--panel-tex-size), nav_bg.png the navigation sidebar (--nav-tex-size).
-const uiTextures = [['ui/panel_bg.png', '--panel-tex-size'], ['ui/nav_bg.png', '--nav-tex-size']]
+const uiTextures = [['ui/panel_bg.png', '--panel-tex-size'], ['ui/nav_bg.png?v=2', '--nav-tex-size']]
   .map(([src, prop]) => { const im = new Image(); im.onload = sizeUiTextures; im.src = src; return [im, prop]; });
 function sizeUiTextures() {
   const k = Math.max(1, Math.round(devicePixelRatio)) / devicePixelRatio;

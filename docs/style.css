@@ -22,11 +22,13 @@ body{font-family:"CR Message","Segoe UI",system-ui,sans-serif;font-synthesis:non
 .layout{display:flex;flex:1;min-height:0}
 .sidebar{width:300px;flex:none;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px;
   border-right:1px solid var(--line)}
-/* Navigation sidebar: Raven's tile (App Textures/NavBackground.tif -> ui/nav_bg.png) over black, 1:1 and crisp
-   (--nav-tex-size from app.js), darkened by --nav-shade; "local" so it scrolls with the panels. */
+/* Navigation sidebar: Raven's tile (App Textures/Test Tex.png -> ui/nav_bg.png) over black, 1:1 and crisp
+   (--nav-tex-size from app.js), tinted with the player colour (--theme, overlaid as on the title bar) and darkened by
+   --nav-shade; "local" so it scrolls with the panels. */
 .sidebar{--nav-shade:#000000a0;
-  background:linear-gradient(var(--nav-shade),var(--nav-shade)) local,url("ui/nav_bg.png") repeat left top local,#000;
-  background-size:auto,var(--nav-tex-size,auto);image-rendering:pixelated}
+  background:linear-gradient(var(--nav-shade),var(--nav-shade)) local,linear-gradient(var(--theme),var(--theme)) local,
+    url("ui/nav_bg.png?v=2") repeat left top local,#000;
+  background-size:auto,auto,var(--nav-tex-size,auto);background-blend-mode:normal,overlay,normal;image-rendering:pixelated}
 .stage{flex:1;position:relative;background:var(--stage);min-width:0}
 #view{width:100%;height:100%;display:block}
 .status{position:absolute;left:12px;bottom:10px;color:var(--hint);font-size:12px;pointer-events:none}
