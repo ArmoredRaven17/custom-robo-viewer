@@ -91,6 +91,7 @@ export class Mover {
       this.E2--;
     }
     if (C.phases[this.phase].armour) this.glow = 1;
+    if (C.phases[this.phase].anchor_frozen) this.vanish = true;   // returns (+0xD1 bit phase) ? 0 : 1
     this.ctx.onPose('charge', this.frame, 0);
   }
 
@@ -141,6 +142,9 @@ export class Mover {
   tick() {
     const F = this.ctx.fields(), B = this.ctx.body();
     if (!F || !B) return;
+    // R+0x1C8, the state's return value: 0 makes the battle draw (0x80038FA4) show the robo at alpha 0.5,
+    // translucent: the Strike Vanisher "stealth" dash while it moves, and charge phases flagged in +0xD1
+    this.vanish = false;
     const g = 0.006 * F.gravity;
     const edge = this.edge; this.edge = false;
     const s = this.state;
@@ -232,6 +236,7 @@ export class Mover {
     }
     this.vel.copy(v);
     this.H--;
+    if (B.stealth_dash && !st8) this.vanish = true;          // st7 moving ticks return body+0x5F ? 0 : 1
     if (st8) this.frame = this.frame + 0.32 >= 10 ? 9.9 : this.frame + 0.32;
     else this.frame = 8.9 / 30;
     this.pose(st8);

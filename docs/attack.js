@@ -401,6 +401,7 @@ export class GunAttack {
     this.floorClip = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.targetMat.clippingPlanes = [this.floorClip];
     this.up = 1;                 // 0 = below the floor, 1 = standing; moves 1 / RISE_TICKS per tick
+    this.shown = true;           // the Target option: off sinks the dummy and hides it, on raises it again
     this.pending = null;         // a new spot to move to: sink here first, then rise there
     this.placed = false;
     g.visible = false;
@@ -697,11 +698,22 @@ export class GunAttack {
     }
     if (this.hitFlash > 0) this.hitFlash--;
     // the target dummy: sink while a new spot is pending, move there once below the floor, then rise
+    // (the Target option uses the same: hidden = sink, then hide; shown again = rise where it should stand)
     if (this.react) this.react.tick();
-    if (this.pending) {
+    if (!this.dummy) this.targetGroup.visible = this.shown;
+    else if (!this.shown) {
       this.up = Math.max(0, this.up - 1 / RISE_TICKS);
-      if (this.up === 0) { const p = this.pending; this.pending = null; this.moveTo(p.x, p.z, p.fwd); }
-    } else this.up = Math.min(1, this.up + 1 / RISE_TICKS);
+      if (this.up === 0) {
+        this.targetGroup.visible = false;
+        if (this.pending) { const p = this.pending; this.pending = null; this.moveTo(p.x, p.z, p.fwd); }
+      }
+    } else {
+      if (!this.targetGroup.visible) { this.targetGroup.visible = true; this.up = 0; }
+      if (this.pending) {
+        this.up = Math.max(0, this.up - 1 / RISE_TICKS);
+        if (this.up === 0) { const p = this.pending; this.pending = null; this.moveTo(p.x, p.z, p.fwd); }
+      } else this.up = Math.min(1, this.up + 1 / RISE_TICKS);
+    }
   }
 
   /** Per render frame: run whole ticks, then place the models. */
@@ -735,6 +747,8 @@ export class GunAttack {
       }
     }
     this.targetMat.color.set(this.hitFlash > 0 ? 0xff4a3a : 0xffc23a);
+    // immune (R+0xE6 > 0, after getting up): drawn at half opacity like any robo (0x80038FA4)
+    this.targetMat.opacity = this.react && this.react.immune > 0 ? 0.4 : 0.8;
     this.placeDummy();
   }
 }

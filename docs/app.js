@@ -5,11 +5,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
-import { GunAttack, EffectLib, setParticles } from './attack.js?v=13';
-import { BombAttack, PodAttack } from './throw.js?v=10';
+import { GunAttack, EffectLib, setParticles } from './attack.js?v=15';
+import { BombAttack, PodAttack } from './throw.js?v=12';
 import { ParticleSystem } from './particles.js?v=2';
-import { Mover } from './move.js?v=3';
-import { effectInstance } from './attack.js?v=13';
+import { Mover } from './move.js?v=4';
+import { effectInstance } from './attack.js?v=15';
 
 const SLOTS = ['gun', 'bomb', 'pod', 'legs'];
 // Player colour themes (the game gives each player one of four colours); icons from App Textures/Theme Icons.tif
@@ -485,11 +485,27 @@ function chargeTick() {
     if (c.frame < 20) return true;
     c.inst.kill(); scene.remove(c.inst.root); return false;      // the end callback kills its generators
   });
+  // the stealth / anchoring states draw the robo (and its parts) at alpha 0.5, translucent (0x80038FA4)
+  setVanish(mover.vanish);
   // super armour: the body glows red (R+0x187C, x0.95 per tick), drawn as material colour (255 v, 0, 0)
   const g = mover.state === 'charge' ? mover.glow : charge.glow * 0.95;
   charge.glow = g;
   if (roboObj) eachMaterial(roboObj, mt => { if (mt.emissive) mt.emissive.setRGB(g, 0, 0); });
 }
+const vanishMat = new WeakMap();
+let vanished = false;
+function setVanish(on) {
+  if (on === vanished && !on) return;
+  vanished = on;
+  for (const o of [roboObj, ...Object.values(partObj)]) if (o) eachMaterial(o, m => {
+    if (!vanishMat.has(m)) vanishMat.set(m, { opacity: m.opacity, transparent: m.transparent });
+    const orig = vanishMat.get(m);
+    const t = on || orig.transparent;
+    if (m.transparent !== t) { m.transparent = t; m.needsUpdate = true; }
+    m.opacity = orig.opacity * (on ? 0.5 : 1);
+  });
+}
+
 async function chargePress() {
   if (acting() || mover.state !== 'ground' || roboAnim.selected === 'air') return;
   await mover.load();
@@ -889,7 +905,7 @@ function frameStep(dt) {
   moveUpdate(dt);
   stepRobo(dt);
   followBones();
-  attack.targetGroup.visible = $('optTarget').checked;
+  attack.shown = $('optTarget').checked;          // sinks / rises like a move (attack.js tick)
   if (!attack.busy && !bombs.busy && !pods.busy && mover.state === 'ground') attack.placeTarget();
   attack.update(dt);
   bombs.update(dt);
