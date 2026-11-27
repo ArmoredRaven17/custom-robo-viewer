@@ -1049,7 +1049,78 @@ setTheme(themeIndex());
 function writeHash() {
   const h = `r=${state.robo}&c=${state.colour}&` + SLOTS.map(s => `${s}=${state[s]}`).join('&');
   history.replaceState(null, '', '#' + h);
+  loadouts.bank();                       // the load out on screen keeps every change
 }
+
+// ---- Load Outs: saved robos (as the MHGU viewers' Hunter Slots) -----------------------------------------------------
+// A load out is { name, state: {robo, colour, gun, bomb, pod, legs}, pose, camera }. The one on screen is banked on
+// every change (and before a switch or leaving the page), so nothing needs saving by hand; clicking another switches to
+// it, pose and camera included. Kept in localStorage.
+const LO_KEY = 'cr-loadouts';
+const loadouts = {
+  list: [], index: 0, busy: false, renaming: false, ready: false,
+  read() {
+    try {
+      const d = JSON.parse(localStorage.getItem(LO_KEY) || 'null');
+      if (d && Array.isArray(d.list)) {
+        this.list = d.list.filter(x => x && typeof x.name === 'string' && x.state && Number.isInteger(x.state.robo));
+        this.index = Number.isInteger(d.index) && this.list[d.index] ? d.index : 0;
+      }
+    } catch (e) { this.list = []; }
+  },
+  write() {
+    try { localStorage.setItem(LO_KEY, JSON.stringify({ list: this.list, index: this.index })); } catch (e) { /* private mode */ }
+  },
+  snapshot() {
+    return { state: { ...state }, pose: roboAnim.selected || 'idle',
+             camera: { pos: camera.position.toArray(), target: controls.target.toArray() } };
+  },
+  bank() {
+    if (!this.ready || this.busy || !this.list[this.index]) return;
+    Object.assign(this.list[this.index], this.snapshot());
+    this.write();
+    if (!this.renaming) this.paint();
+  },
+  freeName() {
+    for (let n = 1; ; n++) { const nm = 'Load Out ' + n; if (!this.list.some(x => x.name === nm)) return nm; }
+  },
+  paint() {
+    const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    $('loadoutList').innerHTML = this.list.map((x, i) =>
+      `<li class="${i === this.index ? 'on' : ''}" data-k="${i}" title="${i === this.index ? 'The load out on screen' : 'Switch to this load out'}">` +
+      `<span class="n">${i + 1}.</span><span class="lab">${esc(x.name)}</span>` +
+      `<span class="tag">${esc(index.robos[x.state.robo] ? index.robos[x.state.robo].name : '')}</span></li>`).join('');
+    $('loDelete').disabled = this.list.length < 2;
+  },
+  async show(k, opt = {}) {
+    const x = this.list[k];
+    if (!x || this.busy || (k === this.index && !opt.force)) return;
+    if (!opt.noBank) this.bank();
+    this.busy = true;
+    try {
+      this.index = k;
+      this.paint();
+      attack.clear(); bombs.clear(); pods.clear(); returnHome();
+      await apply({ ...DEFAULT, ...x.state });
+      if (x.pose && roboAnim.actions[x.pose]) { playMotion(x.pose, 0); $('motionSel').value = x.pose; updateDownLift(); }
+      if (x.camera) { camera.position.fromArray(x.camera.pos); controls.target.fromArray(x.camera.target); controls.update(); }
+    } finally { this.busy = false; }
+    this.bank();
+  },
+  /** Start-up: the saved load outs, or one from the page. A link carrying a different robo becomes a new load out. */
+  init(fromHash) {
+    this.read();
+    const same = a => a && ['robo', 'colour', ...SLOTS].every(k => a[k] === fromHash[k]);
+    const hasHash = location.hash.length > 1;
+    if (!this.list.length) { this.list.push({ name: 'Load Out 1', state: { ...fromHash } }); this.index = 0; return fromHash; }
+    if (hasHash && !same(this.list[this.index].state)) {
+      this.list.push({ name: this.freeName(), state: { ...fromHash } });
+      this.index = this.list.length - 1;
+      return fromHash;
+    }
+    return { ...DEFAULT, ...this.list[this.index].state };
+  },
+};
 
 function readHash() {
   const q = new URLSearchParams(location.hash.slice(1));
@@ -1074,9 +1145,11 @@ async function apply(next) {
 }
 
 function wire() {
+  // one panel open at a time: opening one closes the others
   document.querySelectorAll('.panel-head').forEach(h => h.onclick = () => {
-    const p = h.parentElement;
-    p.dataset.open = p.dataset.open === 'true' ? 'false' : 'true';
+    const p = h.parentElement, open = p.dataset.open !== 'true';
+    document.querySelectorAll('.sidebar .panel').forEach(q => { q.dataset.open = 'false'; });
+    p.dataset.open = open ? 'true' : 'false';
   });
   $('familySel').onchange = e => {
     const fam = roboFamilies()[+e.target.value];
@@ -1113,7 +1186,7 @@ function wire() {
   $('statPrev').onclick = () => cycleStats(-1);
   $('statNext').onclick = () => cycleStats(1);
   $('themeBtn').onclick = () => setTheme((themeIndex() + 1) % THEMES.length);
-  $('motionSel').onchange = e => { playMotion(e.target.value, e.target.value === 'fly' ? 0.1 : undefined); updateDownLift(); };
+  $('motionSel').onchange = e => { playMotion(e.target.value, e.target.value === 'fly' ? 0.1 : undefined); updateDownLift(); loadouts.bank(); };
   $('fireBtn').onclick = fireGun;
   $('bombBtn').onclick = fireBomb;
   // Jump: held while the button / Space is down (the jump rises while held, up to the hold ticks)
@@ -1169,6 +1242,53 @@ function wire() {
     e.target.value = '';
   };
   $('aboutBtn').onclick = () => $('about').showModal();
+  $('loadoutList').onclick = e => {
+    const li = e.target.closest && e.target.closest('li');
+    if (li && !loadouts.renaming) loadouts.show(+li.dataset.k);
+  };
+  $('loCopy').onclick = () => {
+    if (loadouts.busy) return;
+    loadouts.bank();
+    loadouts.list.push({ name: loadouts.freeName(), ...loadouts.snapshot() });
+    loadouts.index = loadouts.list.length - 1;
+    loadouts.paint(); loadouts.write();
+  };
+  $('loNew').onclick = async () => {
+    if (loadouts.busy) return;
+    loadouts.bank();
+    loadouts.list.push({ name: loadouts.freeName(), state: { ...DEFAULT }, pose: 'idle' });
+    await loadouts.show(loadouts.list.length - 1, { noBank: true });
+  };
+  $('loRename').onclick = () => {
+    const li = $('loadoutList').querySelector('li.on');
+    if (!li || loadouts.renaming) return;
+    const x = loadouts.list[loadouts.index], lab = li.querySelector('.lab');
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.maxLength = 40; inp.value = x.name;
+    loadouts.renaming = true;
+    lab.replaceWith(inp); inp.focus(); inp.select();
+    let done = false;
+    const finish = keep => {
+      if (done) return; done = true; loadouts.renaming = false;
+      const v = inp.value.trim();
+      if (keep && v) x.name = v.slice(0, 40);
+      loadouts.paint(); loadouts.write();
+    };
+    inp.onkeydown = ev => { ev.stopPropagation(); if (ev.key === 'Enter') finish(true); else if (ev.key === 'Escape') finish(false); };
+    inp.onblur = () => finish(true);
+  };
+  $('loDelete').onclick = async () => {
+    if (loadouts.list.length < 2 || loadouts.busy) return;
+    const x = loadouts.list[loadouts.index];
+    if (!confirm(`Delete ${x.name}? Its robo and parts are lost.`)) return;
+    loadouts.list.splice(loadouts.index, 1);
+    const next = Math.min(loadouts.index, loadouts.list.length - 1);
+    loadouts.index = -1;
+    await loadouts.show(next, { noBank: true, force: true });
+  };
+  // the camera and pose are kept when leaving the page
+  addEventListener('pagehide', () => loadouts.bank());
+  document.addEventListener('visibilitychange', () => { if (document.hidden) loadouts.bank(); });
   addEventListener('hashchange', () => apply(readHash()));
 }
 
@@ -1241,11 +1361,17 @@ async function main() {
   sizeStatSprites();
   matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change', sizeStatSprites);
   wire();
-  await apply(readHash());
+  const first = loadouts.init(readHash());
+  await apply(first);
+  loadouts.ready = true;
+  const lo = loadouts.list[loadouts.index];
+  if (lo && lo.pose && lo.pose !== 'idle' && roboAnim.actions[lo.pose]) { playMotion(lo.pose, 0); $('motionSel').value = lo.pose; updateDownLift(); }
+  if (lo && lo.camera) { camera.position.fromArray(lo.camera.pos); controls.target.fromArray(lo.camera.target); controls.update(); }
+  loadouts.bank();
   showPartStats();
   bombs.load().then(buildDummy).catch(err => console.error('target dummy', err));
   document.body.classList.remove('booting');
   requestAnimationFrame(loop);
 }
 main().catch(err => { status('Failed to load: ' + err.message); console.error(err); });
-window.__viewer = { frameStep, mover, charge, chargePress, legFx, moveTick, jumpPress, updateFloor, idleFloor, get floorY() { return floorY; }, grid, attack, bombs, pods, particles, state, get index() { return index; }, partObj, partAnim, get robo() { return roboObj; }, rig, camera, roboAnim, gaitFor };
+window.__viewer = { loadouts, frameStep, mover, charge, chargePress, legFx, moveTick, jumpPress, updateFloor, idleFloor, get floorY() { return floorY; }, grid, attack, bombs, pods, particles, state, get index() { return index; }, partObj, partAnim, get robo() { return roboObj; }, rig, camera, roboAnim, gaitFor };

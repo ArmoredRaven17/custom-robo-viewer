@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Custom Robo Viewer</title>
 <link rel="icon" type="image/png" href="data/ui/app_icon.png">
-<link rel="stylesheet" href="style.css?v=43">
+<link rel="stylesheet" href="style.css?v=44">
 </head>
 <body class="booting">
 <div id="app">
@@ -22,7 +22,19 @@
 
   <main class="layout">
     <aside class="sidebar">
-      <section class="panel" data-open="true">
+      <section class="panel" id="loadoutsPanel" data-open="true">
+        <button class="panel-head">Load Outs <span class="chev">&#9662;</span></button>
+        <div class="panel-body">
+          <ol id="loadoutList" class="loadouts"></ol>
+          <div class="row">
+            <button id="loNew" class="btn tiny" title="A new load out: Ray 01 with the standard parts">New</button>
+            <button id="loCopy" class="btn tiny" title="A new load out, a copy of this one">Copy</button>
+            <button id="loRename" class="btn tiny" title="Rename this load out">Rename</button>
+            <button id="loDelete" class="btn tiny" title="Delete this load out">Delete</button>
+          </div>
+        </div>
+      </section>
+      <section class="panel" data-open="false">
         <button class="panel-head">Robo <span class="chev">&#9662;</span></button>
         <div class="panel-body">
           <label class="slot"><span><img class="slot-label" src="data/ui/custom_74.png" alt="Body"></span><select id="familySel" title="Body family"></select></label>
@@ -33,7 +45,7 @@
         </div>
       </section>
 
-      <section class="panel" data-open="true">
+      <section class="panel" data-open="false">
         <button class="panel-head">Parts <span class="chev">&#9662;</span></button>
         <div class="panel-body">
           <label class="slot"><span><img class="slot-label" src="data/ui/custom_71.png" alt="Gun"></span><select id="sel-gun"></select></label>
@@ -52,7 +64,7 @@
         </div>
       </section>
 
-      <section class="panel" data-open="true">
+      <section class="panel" data-open="false">
         <button class="panel-head">Animation <span class="chev">&#9662;</span></button>
         <div class="panel-body">
           <div class="sub">Part animations</div>
@@ -92,7 +104,7 @@
         </div>
       </section>
 
-      <section class="panel" data-open="true">
+      <section class="panel" data-open="false">
         <button class="panel-head">View <span class="chev">&#9662;</span></button>
         <div class="panel-body">
           <label class="check"><input type="checkbox" id="optSpin"> Turntable</label>
@@ -132,6 +144,9 @@
   robo fires from its stance without aiming at the target. Guns with a ribbon trail draw it as the game samples it, and
   the particle effects (the Flame Gun's flame, sparks and smoke on projectiles, every hit and explosion burst) run the
   game's own particle programs. Random values differ from the game's, so no two shots look exactly alike.</p>
+  <p><b>Load Outs</b> keep your robos: the one on screen saves itself as you change it (parts, colour, pose and camera),
+  and clicking another switches to it. New starts from Ray 01, Copy duplicates the one on screen. They are kept in this
+  browser; a shared link with a different robo arrives as a new load out.</p>
   <p><b>Jump</b> (Space): hold for height, then press again in the air for the body's air move, read from the game's
   records: a straight dash, an air jump, or the steerable dash (the Lightning Sky bodies and Ruhiel transform and fly).
   Landing locks the robo for a time that grows with the fall. The legs part supplies the boost flame at the knees, the
@@ -153,6 +168,6 @@
   "three/addons/":"./vendor/three/examples/jsm/"
 }}
 </script>
-<script type="module" src="app.js?v=75"></script>
+<script type="module" src="app.js?v=77"></script>
 </body>
 </html>

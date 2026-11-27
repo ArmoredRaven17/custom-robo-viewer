@@ -149,3 +149,15 @@ button,select,input,textarea{font-family:inherit}
 ::-webkit-scrollbar-corner{background:#000}
 /* the attack / move readout keeps one size whichever weapon or move wrote it (the longest messages wrap to 4 lines) */
 #fireLabel{min-height:calc(4 * 1.35em)}
+
+/* Load Outs: the saved robos, the one on screen highlighted (as the MHGU viewers' Hunter Slots) */
+.loadouts{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:4px;max-height:240px;overflow-y:auto}
+.loadouts li{display:flex;gap:8px;align-items:center;padding:5px 8px;border-radius:6px;background:#000000a0;
+  border:1px solid #ffffff26;cursor:pointer}
+.loadouts li:hover{border-color:#ffffff66}
+.loadouts li.on{border-color:var(--cta);box-shadow:inset 0 0 0 1px var(--cta)}
+.loadouts .n{color:var(--hint);min-width:1.6em}
+.loadouts .lab{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.loadouts .tag{color:var(--hint);font-size:12px;white-space:nowrap}
+.loadouts input{flex:1;min-width:0;background:#1d1d1d;color:var(--text);border:1px solid var(--line);border-radius:4px;
+  font:inherit;padding:2px 4px}
