@@ -11,20 +11,29 @@ html,body{height:100%;margin:0}
 body{font-family:"CR Message","Segoe UI",system-ui,sans-serif;font-synthesis:none;background:var(--bg);color:var(--text);font-size:13px}
 #app{display:flex;flex-direction:column;height:100%}
 .titlebar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--theme);border-bottom:1px solid #0008}
+/* Title bar: Raven's sheen (App Textures/TitleBackground.tif -> ui/title_bg.png, a grey vertical gradient)
+   fitted to the bar's height, with the player colour (--theme) overlaid on it. */
+.titlebar{background:linear-gradient(var(--theme),var(--theme)),url("ui/title_bg.png") repeat-x left top,var(--theme);
+  background-size:auto,auto 100%,auto;background-blend-mode:overlay,normal,normal}
 .titlebar h1{text-shadow:0 1px 0 #000,1px 0 0 #000,0 -1px 0 #000,-1px 0 0 #000}
 .titlebar .btn:not(.cta){background:#1d1d1d;border-color:#ffffff40}
 .titlebar .btn:not(.cta):hover{background:#2e2e2e}
-.titlebar h1{font-size:15px;font-weight:600;margin:0;flex:1}
+.titlebar h1{font-size:24px;line-height:1;font-weight:600;margin:0;flex:1}  /* 24px = the message font's own cell: 1 glyph pixel per CSS px */
 .layout{display:flex;flex:1;min-height:0}
-.sidebar{width:300px;flex:none;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px;background:#000;
+.sidebar{width:300px;flex:none;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px;
   border-right:1px solid var(--line)}
+/* Navigation sidebar: Raven's tile (App Textures/NavBackground.tif -> ui/nav_bg.png) over black, 1:1 and crisp
+   (--nav-tex-size from app.js), darkened by --nav-shade; "local" so it scrolls with the panels. */
+.sidebar{--nav-shade:#000000a0;
+  background:linear-gradient(var(--nav-shade),var(--nav-shade)) local,url("ui/nav_bg.png") repeat left top local,#000;
+  background-size:auto,var(--nav-tex-size,auto);image-rendering:pixelated}
 .stage{flex:1;position:relative;background:var(--stage);min-width:0}
 #view{width:100%;height:100%;display:block}
 .status{position:absolute;left:12px;bottom:10px;color:var(--hint);font-size:12px;pointer-events:none}
 /* Panels: square-cornered with a --panel-edge outline (red: Raven, 2026-11-26), filled with Raven's UI texture
-   (App Textures/Background.tif -> data/ui/panel_bg.png) tiled 1:1 and darkened by --panel-shade. */
+   (App Textures/Background.tif -> ui/panel_bg.png) tiled 1:1 and darkened by --panel-shade. */
 .panel{border:var(--panel-edge-w) solid var(--panel-edge);border-radius:0;overflow:clip;
-  background:linear-gradient(var(--panel-shade),var(--panel-shade)),url("data/ui/panel_bg.png") repeat left top,var(--bg2);
+  background:linear-gradient(var(--panel-shade),var(--panel-shade)),url("ui/panel_bg.png") repeat left top,var(--bg2);
   background-size:auto,var(--panel-tex-size,auto),auto;image-rendering:pixelated}
 /* --panel-tex-size is set by app.js so one texture pixel covers a whole number of screen pixels at any
    devicePixelRatio (at 1.5, 1 px rows otherwise alternate 1 and 2 screen pixels: light and dark bands). */
@@ -39,6 +48,9 @@ body{font-family:"CR Message","Segoe UI",system-ui,sans-serif;font-synthesis:non
 select{width:100%;background:#1d1d1d;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 6px;font:inherit}
 .slot{display:grid;grid-template-columns:44px 1fr;align-items:center;gap:8px}
 .check{display:flex;gap:8px;align-items:center;cursor:pointer}
+.range-row{display:flex;gap:8px;align-items:center}
+.range-row input{flex:1;min-width:0}
+.range-row span{min-width:2ch;text-align:right}
 .btn{background:#ffffff14;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 12px;
   font:inherit;cursor:pointer}
 .btn:hover{background:#ffffff24}
@@ -58,7 +70,6 @@ body.booting .sidebar{opacity:.5;pointer-events:none}
 .anim select { width: auto; }
 
 .motions { flex-wrap: wrap; gap: 4px; margin: 6px 0; }
-.motbtn.on { outline: 1px solid var(--accent, #3cc); }
 
 /* buttons and inputs use the page font (browsers default them to the system font) */
 button,select,input,textarea{font-family:inherit}
@@ -77,7 +88,7 @@ button,select,input,textarea{font-family:inherit}
 .panel{--panel-head-fill:var(--panel-edge)}
 .panel .panel-head{background:var(--panel-head-fill)}
 .panel .panel-head:hover{background:color-mix(in srgb,var(--panel-head-fill) 85%,#fff)}
-.panel .panel-head{text-transform:uppercase}
+.panel .panel-head{text-transform:uppercase;font-weight:700;font-synthesis-weight:auto}
 /* A rule from the end of the title to the panel edge (before the collapse arrow) */
 .panel .panel-head{align-items:center;gap:8px;justify-content:flex-start}
 .panel .panel-head::after{content:"";order:1;flex:1;height:2px;background:currentColor;box-shadow:0 1px 0 #000;opacity:.9}
@@ -136,3 +147,5 @@ button,select,input,textarea{font-family:inherit}
 ::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--theme) 80%,#fff)}
 ::-webkit-scrollbar-button{background:var(--theme);height:12px}
 ::-webkit-scrollbar-corner{background:#000}
+/* the attack / move readout keeps one size whichever weapon or move wrote it (the longest messages wrap to 4 lines) */
+#fireLabel{min-height:calc(4 * 1.35em)}

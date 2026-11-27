@@ -2,8 +2,12 @@ r"""Copy the converter's output into docs/data/ for the viewer.
 
     python scripts\build_viewer.py            # from F:\Custom Robo Extract\conv (or CR_CONV)
 
-Only index.json, models/*.glb, tex/*.png and the UI web font (fonts/message_font.woff, built from the game's
-message font by tools\extract_fonts.py) are copied; textures no model or variant references are skipped.
+Only index.json, models/*.glb, tex/*.png, the UI web font (fonts/message_font.woff, built from the game's
+message font by tools\extract_fonts.py) and the game sprites the UI uses (data/ui) are copied; textures no model or
+variant references are skipped. docs/data is game-derived, gitignored and rebuilt from scratch on every run.
+
+Raven's own app textures are not part of this build: they live in docs/ui (tracked), imported from the App Textures
+folder by scripts\import_app_textures.py.
 """
 import json
 import os
@@ -12,12 +16,6 @@ import sys
 import time
 
 SRC = os.environ.get("CR_CONV", r"F:\Custom Robo Extract\conv")
-# UI textures Raven supplies (kept beside the extract, not in the repo); copied to docs/data/ui as PNG
-APP_TEX = os.environ.get("CR_APP_TEX", r"F:\Custom Robo Extract\App Textures")
-UI_TEXTURES = {"Background.tif": "panel_bg.png"}
-# Theme Icons.tif: 1P..4P stacked on an opaque white sheet; split at the white gaps, white made transparent
-THEME_SHEET = "Theme Icons.tif"
-THEME_BANDS = [(0, 86), (86, 172), (172, 258), (258, 346)]
 # app icon: the game's Robo Cube (TPL embedded in logo_read_us.dbn at 0x130600, image 1). Its palette is opaque
 # with a near-black background baked in, which black_to_alpha removes.
 APP_ICON = os.path.join("textures", "_embedded", "logo_read_us.dbn@130600_1.png")
@@ -83,35 +81,6 @@ def black_to_alpha(rgba, dark=72):
     return out
 
 
-def save_theme_icons(sheet):
-    from PIL import Image
-    import numpy as np
-    a = np.asarray(Image.open(sheet).convert("RGBA"))
-    os.makedirs(os.path.join(DST, "ui"), exist_ok=True)
-    for k, (y0, y1) in enumerate(THEME_BANDS):
-        Image.fromarray(white_to_alpha(a[y0:y1])).save(os.path.join(DST, "ui", f"theme_p{k + 1}.png"))
-
-
-def _period(a, axis):
-    """Smallest repeat period of an image along an axis (rows for axis 0, columns for axis 1)."""
-    n = a.shape[axis]
-    for p in range(1, n):
-        x, y = (a[p:], a[:-p]) if axis == 0 else (a[:, p:], a[:, :-p])
-        if (x == y).all():
-            return p
-    return n
-
-
-def save_tile(im, path):
-    """Crop a repeating texture to a whole number of its periods, so tiling it shows no seam (Background.tif is
-    173 rows of a 4-row stripe: the 173rd row doubled a line at every tile edge)."""
-    import numpy as np
-    a = np.asarray(im)
-    py, px = _period(a, 0), _period(a, 1)
-    h, w = a.shape[0] // py * py, a.shape[1] // px * px
-    im.crop((0, 0, w, h)).save(path)
-
-
 def copy_stats(stats_src):
     """stats.json (tools\\extract_stats.py) plus the game sprites it names ("sprite/custom.tpl#55" ->
     conv/textures/sprite/custom_55.png) into docs/data/ui."""
@@ -126,6 +95,72 @@ def copy_stats(stats_src):
         name = os.path.basename(os.path.splitext(path)[0]) + f"_{k}.png"
         shutil.copy2(src, os.path.join(DST, "ui", name))
     shutil.copy2(stats_src, os.path.join(DST, "stats.json"))
+
+
+def _slim(v):
+    """Drop the raw record bytes and the texts the viewer does not use (it has the descriptions from index.json)."""
+    if isinstance(v, dict):
+        return {k: _slim(x) for k, x in v.items() if k not in ("raw", "description", "dev_name")}
+    if isinstance(v, list):
+        return [_slim(x) for x in v]
+    return v
+
+
+def copy_effects():
+    """Weapon effects (tools/effects.py: effects.json + models/gfx_<kind>_NN.glb + their textures) and the fire
+    data (tools/gun_attacks.py: gun_attacks.json; tools/bomb_pod_attacks.py: bomb_attacks.json, pod_attacks.json),
+    slimmed by _slim."""
+    eff_src = os.path.join(SRC, "effects.json")
+    if not os.path.exists(eff_src):
+        return 0
+    eff = json.load(open(eff_src, encoding="utf-8"))
+    tex, n = set(), 0
+    for kind in ("gun", "bomb", "pod", "leg", "attack"):
+        for g in eff.get(kind, {}).values():
+            shutil.copy2(os.path.join(SRC, "models", g["glb"]), os.path.join(DST, "models", g["glb"]))
+            n += 1
+            for st in g.values():
+                if isinstance(st, dict):
+                    for m in st.get("mats", []):
+                        tex.update(([m["tex"]["img"]] if m.get("tex") else []) + m.get("imgs", []))
+                        if m.get("tex1"):                       # the second TObj (Stun Gun, Wave Laser)
+                            tex.update([m["tex1"]["img"]] + m["tex1"].get("imgs", []))
+    # HSD particle banks (tools/particles.py: particles.json + one PNG per texture-group image)
+    ptcl_src = os.path.join(SRC, "particles.json")
+    if os.path.exists(ptcl_src):
+        pt = json.load(open(ptcl_src, encoding="utf-8"))
+        for bank in pt["banks"].values():
+            for grp in bank["texg"]:
+                tex.update(grp["images"])
+        shutil.copy2(ptcl_src, os.path.join(DST, "particles.json"))
+    for t in tex:
+        shutil.copy2(os.path.join(SRC, "tex", t), os.path.join(DST, "tex", t))
+    shutil.copy2(eff_src, os.path.join(DST, "effects.json"))
+    # jump / air moves / landing (tools/move_air.py): per body the dash style and counts, per body x legs the
+    # blended movement fields the simulation needs
+    mv_src = os.path.join(SRC, "movement.json")
+    if os.path.exists(mv_src):
+        mv = json.load(open(mv_src, encoding="utf-8"))
+        keep = ("id", "name", "dash_style", "air_dash_count", "air_jump_count", "dash_pitch_deg", "flies", "stealth_dash")
+        def charge(b):
+            c = {k: v for k, v in b["charge_attack_state12"].items() if k != "sim_flat_standard_legs"}
+            return c
+        out = {"units": mv["units"], "bodies": [{**{k: b[k] for k in keep}, "charge": charge(b)} for b in mv["bodies"]],
+               "fields": mv["blended_fields_by_body_then_legs"]}
+        json.dump(out, open(os.path.join(DST, "movement.json"), "w", encoding="utf-8"), separators=(",", ":"))
+    # hit reactions (tools/hit_reactions.py): per body the down threshold, knockback / stagger %, down ticks
+    hr_src = os.path.join(SRC, "hit_reactions.json")
+    if os.path.exists(hr_src):
+        hr = json.load(open(hr_src, encoding="utf-8"))
+        keep = ("id", "name", "down_threshold", "knockback_pct", "stagger_pct", "down_ticks", "hurt_radius")
+        out = {"constants": hr["constants"], "bodies": [{k: b[k] for k in keep} for b in hr["bodies"]]}
+        json.dump(out, open(os.path.join(DST, "hit_reactions.json"), "w", encoding="utf-8"), separators=(",", ":"))
+    for name in ("gun_attacks.json", "bomb_attacks.json", "pod_attacks.json"):
+        src = os.path.join(SRC, name)
+        if os.path.exists(src):
+            atk = _slim(json.load(open(src, encoding="utf-8")))
+            json.dump(atk, open(os.path.join(DST, name), "w", encoding="utf-8"), separators=(",", ":"))
+    return n
 
 
 def main():
@@ -152,12 +187,6 @@ def main():
     if os.path.exists(font):
         os.makedirs(os.path.join(DST, "fonts"))
         shutil.copy2(font, os.path.join(DST, "fonts", "message_font.woff"))
-    if os.path.isdir(APP_TEX):
-        from PIL import Image
-        os.makedirs(os.path.join(DST, "ui"), exist_ok=True)
-        for src, dst in UI_TEXTURES.items():
-            if os.path.exists(os.path.join(APP_TEX, src)):
-                save_tile(Image.open(os.path.join(APP_TEX, src)).convert("RGBA"), os.path.join(DST, "ui", dst))
     icon = os.path.join(SRC, APP_ICON)
     if os.path.exists(icon):
         os.makedirs(os.path.join(DST, "ui"), exist_ok=True)
@@ -165,15 +194,13 @@ def main():
         import numpy as np
         rgba = np.asarray(Image.open(icon).convert("RGBA"))
         Image.fromarray(black_to_alpha(rgba)).save(os.path.join(DST, "ui", "app_icon.png"))
-    sheet = os.path.join(APP_TEX, THEME_SHEET)
-    if os.path.exists(sheet):
-        save_theme_icons(sheet)
     stats_src = os.path.join(SRC, "stats.json")
     if os.path.exists(stats_src):
         copy_stats(stats_src)
+    n_fx = copy_effects()
     index["build"] = int(time.time())       # the viewer appends it to model URLs so rebuilt GLBs are refetched
     json.dump(index, open(os.path.join(DST, "index.json"), "w"), separators=(",", ":"))
-    print(f"{len(models)} models, {len(tex)} textures -> {DST}")
+    print(f"{len(models)} models, {len(tex)} textures, {n_fx} effect models (guns, bombs, pods) -> {DST}")
 
 
 if __name__ == "__main__":

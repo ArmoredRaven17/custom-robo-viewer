@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Custom Robo Viewer</title>
 <link rel="icon" type="image/png" href="data/ui/app_icon.png">
-<link rel="stylesheet" href="style.css?v=34">
+<link rel="stylesheet" href="style.css?v=43">
 </head>
 <body class="booting">
 <div id="app">
   <header class="titlebar">
     <h1>Custom Robo Viewer</h1>
-    <button id="themeBtn" class="theme-btn" title="Player colour: P1" aria-label="Player colour theme"><img id="themeIcon" src="data/ui/theme_p1.png" alt="1P"></button>
+    <button id="themeBtn" class="theme-btn" title="Player colour: P1" aria-label="Player colour theme"><img id="themeIcon" src="ui/theme_p1.png" alt="1P"></button>
     <button id="shotBtn" class="btn tiny" title="Save a PNG of the view">Screenshot</button>
     <button id="saveBtn" class="btn tiny" title="Save this loadout as a .json file">Save</button>
     <button id="openBtn" class="btn tiny" title="Open a saved loadout">Open</button>
@@ -55,21 +55,40 @@
       <section class="panel" data-open="true">
         <button class="panel-head">Animation <span class="chev">&#9662;</span></button>
         <div class="panel-body">
-          <div class="sub">Robo pose</div>
-          <div class="row motions">
-            <button id="motIdle" class="btn tiny motbtn" data-m="idle" title="The stance the robo idles in">Idle</button>
-            <button id="motGun" class="btn tiny motbtn" data-m="gun" title="The gun-drawn stance (shown when a gun is picked)">Gun drawn</button>
-            <button id="motBomb" class="btn tiny motbtn" data-m="bomb" title="The bomb-drawn stance (shown when a bomb is picked)">Bomb drawn</button>
-            <button id="motFly" class="btn tiny motbtn" data-m="fly" title="Transform to flying mode (Lightning Sky bodies and Ruhiel)" hidden>Fly</button>
-          </div>
           <div class="sub">Part animations</div>
           <div class="anim">
-            <div class="row"><button id="animPlay" class="btn tiny" title="Play each part's action clip from frame 0; it holds the last frame">Play</button>
-              <select id="animSpeed" title="Playback speed"><option value="0.125">1/8&times;</option><option value="0.25" selected>1/4&times;</option><option value="0.5">1/2&times;</option><option value="1">1&times;</option></select>
-              <button id="animRest" class="btn tiny" title="Back to each part's deployed pose (its clip's last frame)">Rest</button></div>
+            <div class="row"><button id="animPlay" class="btn tiny" title="Play each part's action clip from frame 0; it holds the last frame">Play</button></div>
             <input type="range" id="animFrame" min="0" max="10" step="0.25" value="10" title="Part animation frame">
-            <div class="hint" id="animLabel"></div>
           </div>
+          <div class="sub">Robo pose</div>
+          <select id="motionSel" title="Robo pose or movement loop">
+            <optgroup label="Stances">
+              <option value="idle">Idle</option>
+              <option value="gun">Gun drawn</option>
+              <option value="bomb">Bomb drawn</option>
+              <option value="air" title="The pose the game holds while airborne after a jump">Midair</option>
+              <option value="fly" hidden>Fly (transform)</option>
+            </optgroup>
+            <optgroup label="Down" title="Knocked down: the fall motion held at frame 29, as the game holds it">
+              <option value="down">On its back</option>
+              <option value="down_face">Face down</option>
+            </optgroup>
+            <optgroup label="Movement">
+              <option value="walk">Walk</option>
+              <option value="run">Run</option>
+              <option value="walk_back">Walk back</option>
+              <option value="run_back">Run back</option>
+            </optgroup>
+          </select>
+          <div class="sub">Moves</div>
+          <div class="row"><button id="jumpBtn" class="btn tiny cta" title="Jump (Space). Hold for height; press again in the air for the body's air move (dash, air jump or flying dash)">Jump</button>
+            <button id="chargeBtn" class="btn tiny cta" title="Collision charge (C): the body's own charge attack, from the ground">Charge</button>
+            <button id="homeBtn" class="btn tiny" title="Put the robo back where it started">Return</button></div>
+          <div class="sub">Attacks</div>
+          <div class="row"><button id="fireBtn" class="btn tiny cta" title="Fire the equipped gun (F). Midair fires its air version">Fire</button>
+            <button id="bombBtn" class="btn tiny cta" title="Launch the equipped bomb (B). Midair uses its air version">Bomb</button>
+            <button id="podBtn" class="btn tiny cta" title="Deploy the equipped pods (P). Midair uses their air launch">Pod</button></div>
+          <div class="hint" id="fireLabel"></div>
         </div>
       </section>
 
@@ -79,10 +98,11 @@
           <label class="check"><input type="checkbox" id="optSpin"> Turntable</label>
           <label class="check"><input type="checkbox" id="optGrid" checked> Floor grid</label>
           <label class="check"><input type="checkbox" id="optWire"> Wireframe</label>
-          <label class="check"><input type="checkbox" id="optBones"> Skeleton</label>
-          <label class="check"><input type="checkbox" id="optIllegal" checked> List illegal parts</label>
+          <label class="check"><input type="checkbox" id="optTarget" checked> Target</label>
+          <label class="range-row" title="Distance from the robo to the target">Distance <input type="range" id="targetDist" min="3" max="30" step="1" value="10"> <span id="targetDistVal">10</span></label>
           <div class="row"><button id="frontBtn" class="btn tiny">Front</button><button id="sideBtn" class="btn tiny">Side</button>
-            <button id="backBtn" class="btn tiny">Back</button></div>
+            <button id="backBtn" class="btn tiny">Back</button>
+            <button id="shotViewBtn" class="btn tiny" title="Frame the robo and the target from the side">Target Cam</button></div>
         </div>
       </section>
     </aside>
@@ -100,10 +120,30 @@
   <code>F:\Custom Robo Extract</code>: HAL Sysdolphin models, GX textures and the game's own names.</p>
   <p><b>Placement</b> is read from the game's battle code. Each part root is placed on a robo bone (gun: right
   forearm, bomb: left forearm, pods: torso, legs: both knees and feet), offset and scaled by that robo's own mount
-  record. Parts idle in their rest pose. Each part's own action clip is decoded from the game's keyframes; play it or scrub it under Animation (Rest returns to the rest pose).</p>
+  record. Parts idle in their rest pose. Each part's own action clip is decoded from the game's keyframes; play it or scrub it under Animation.</p>
   <p><b>Motions</b>: Idle, Gun drawn and Bomb drawn are the stances the game's parts menu plays (read from its code);
   choosing the Gun or Bomb list switches to its stance and the others to idle, as the menu's cursor does. The poses are
   built by a translation of the game's own pose code from its motion data, each robo's proportions and hip height.</p>
+  <p><b>Gun attack</b>: Fire (or F) shoots the equipped gun the way the battle code does, read from each gun's fire
+  data: volleys, rounds, fan, homing and up to five flight phases, with the game's projectile and muzzle-flash models.
+  The Midair stance fires the gun's air version, any other stance its ground version. As in the game, the robo holds
+  its firing pose through the volleys and plays its recoil motion once, over the gun's recovery time. The target is Oil Can with the
+  Can parts, in wireframe, at the set distance, hit with its own body radius; there are no walls or arena edge, and the
+  robo fires from its stance without aiming at the target. Guns with a ribbon trail draw it as the game samples it, and
+  the particle effects (the Flame Gun's flame, sparks and smoke on projectiles, every hit and explosion burst) run the
+  game's own particle programs. Random values differ from the game's, so no two shots look exactly alike.</p>
+  <p><b>Jump</b> (Space): hold for height, then press again in the air for the body's air move, read from the game's
+  records: a straight dash, an air jump, or the steerable dash (the Lightning Sky bodies and Ruhiel transform and fly).
+  Landing locks the robo for a time that grows with the fall. The legs part supplies the boost flame at the knees, the
+  landing dust and the run dust; its numbers (jump height, gravity, dash length) blend with the body's. Return puts
+  the robo back where it started. The stick is neutral here, so air moves go straight ahead.</p>
+  <p><b>Charge</b> (C) is the body's Collision attack from its record: three phases of set speed and angle, homing on the
+  target in the first two, hitting once in the second; armoured phases glow red. The body's own aura and impact
+  effects play with it.</p>
+  <p><b>Bomb and Pod</b> (B, P) launch the equipped bomb or pods the same way, from each part's record: a bomb arcs to a
+  point on the floor part of the way to the target and explodes near it or after its fuse; pods fly out, hover and
+  home in, locking on within range. Both use the game's own models and explosion growth. The bomb is released at once
+  (no aiming with the stick), and there are no walls.</p>
   <form method="dialog"><button class="btn tiny">Close</button></form>
 </dialog>
 
@@ -113,6 +153,6 @@
   "three/addons/":"./vendor/three/examples/jsm/"
 }}
 </script>
-<script type="module" src="app.js?v=28"></script>
+<script type="module" src="app.js?v=75"></script>
 </body>
 </html>

@@ -5,12 +5,17 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { GunAttack, EffectLib, setParticles } from './attack.js?v=13';
+import { BombAttack, PodAttack } from './throw.js?v=10';
+import { ParticleSystem } from './particles.js?v=2';
+import { Mover } from './move.js?v=3';
+import { effectInstance } from './attack.js?v=13';
 
 const SLOTS = ['gun', 'bomb', 'pod', 'legs'];
 // Player colour themes (the game gives each player one of four colours); icons from App Textures/Theme Icons.tif
 const THEMES = [
-  { name: 'P1', css: '#7B0808', icon: 'data/ui/theme_p1.png' }, { name: 'P2', css: '#002973', icon: 'data/ui/theme_p2.png' },
-  { name: 'P3', css: '#006300', icon: 'data/ui/theme_p3.png' }, { name: 'P4', css: '#7B6B00', icon: 'data/ui/theme_p4.png' }];
+  { name: 'P1', css: '#7B0808', icon: 'ui/theme_p1.png' }, { name: 'P2', css: '#002973', icon: 'ui/theme_p2.png' },
+  { name: 'P3', css: '#006300', icon: 'ui/theme_p3.png' }, { name: 'P4', css: '#7B6B00', icon: 'ui/theme_p4.png' }];
 // Every robo's five colour variants (chara.BIN entries 5i..5i+4) are, in the game, the original colours then red,
 // blue, green and yellow; the swatches use those fixed colours for every robo.
 const ROBO_COLOURS = [
@@ -22,6 +27,7 @@ const $ = id => document.getElementById(id);
 // ---- scene ---------------------------------------------------------------------------------------
 const canvas = $('view');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.localClippingEnabled = true;          // the target dummy is cut off at the floor while it rises
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
@@ -42,22 +48,37 @@ scene.add(rim);
 const rig = new THREE.Group();
 rig.rotation.y = Math.PI;
 scene.add(rig);
-const grid = new THREE.GridHelper(4, 40, 0x445060, 0x262c36);
+// Floor grid: 0.5-unit squares (a run covers up to ~0.11 units per frame, so the lines read as motion instead of
+// strobing), all lines one colour (the floor wraps by one square while it scrolls, so a centre line would jump), and
+// faded out with distance from the robo so its edge never shows.
+const GRID_SIZE = 24, GRID_DIV = 48, GRID_FADE = [3.5, 10];
+const grid = new THREE.GridHelper(GRID_SIZE, GRID_DIV, 0x343c4a, 0x343c4a);
+grid.material.transparent = true;
+grid.material.depthWrite = false;
+const floorCentre = { value: new THREE.Vector2() };       // the robo's x/z: the fade follows it
+grid.material.onBeforeCompile = sh => {
+  sh.uniforms.floorCentre = floorCentre;
+  sh.vertexShader = 'varying vec3 vFloorW;\n' + sh.vertexShader.replace('#include <project_vertex>',
+    '#include <project_vertex>\nvFloorW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+  sh.fragmentShader = 'varying vec3 vFloorW;\nuniform vec2 floorCentre;\n' + sh.fragmentShader.replace('#include <color_fragment>',
+    `#include <color_fragment>\ndiffuseColor.a *= 1.0 - smoothstep(${GRID_FADE[0].toFixed(1)}, ${GRID_FADE[1].toFixed(1)}, length(vFloorW.xz - floorCentre));`);
+};
 scene.add(grid);
 
-// ---- panel texture: crisp at any pixel ratio ------------------------------------------------------
+// ---- UI textures: crisp at any pixel ratio ----------------------------------------------------------
 // Each texture pixel is drawn as round(devicePixelRatio) screen pixels, so the stripes stay even.
-const panelTex = new Image();
-function sizePanelTexture() {
-  if (!panelTex.naturalWidth) return;
+// panel_bg.png fills the panels (--panel-tex-size), nav_bg.png the navigation sidebar (--nav-tex-size).
+const uiTextures = [['ui/panel_bg.png', '--panel-tex-size'], ['ui/nav_bg.png', '--nav-tex-size']]
+  .map(([src, prop]) => { const im = new Image(); im.onload = sizeUiTextures; im.src = src; return [im, prop]; });
+function sizeUiTextures() {
   const k = Math.max(1, Math.round(devicePixelRatio)) / devicePixelRatio;
-  document.documentElement.style.setProperty('--panel-tex-size',
-    `${panelTex.naturalWidth * k}px ${panelTex.naturalHeight * k}px`);
+  for (const [im, prop] of uiTextures) {
+    if (im.naturalWidth) document.documentElement.style.setProperty(prop,
+      `${im.naturalWidth * k}px ${im.naturalHeight * k}px`);
+  }
 }
-panelTex.onload = sizePanelTexture;
-panelTex.src = 'data/ui/panel_bg.png';
 (function watchRatio() {
-  matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change', () => { sizePanelTexture(); watchRatio(); },
+  matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change', () => { sizeUiTextures(); watchRatio(); },
     { once: true });
 })();
 
@@ -65,7 +86,7 @@ const loader = new GLTFLoader();
 const texLoader = new THREE.TextureLoader();
 const glbCache = new Map();
 const texCache = new Map();
-let index, stats = null, roboObj = null, skelHelper = null;
+let index, stats = null, roboObj = null;
 const partObj = {};
 const partAnim = {};      // slot -> { mixer, action, frames }
 const roboAnim = { mixer: null, actions: {}, current: null };
@@ -190,13 +211,20 @@ function setupRoboMotions(obj) {
   roboAnim.fps = (index.robos[state.robo].motions || {}).fps || 30;
   for (const c of clips) roboAnim.actions[c.name] = roboAnim.mixer.clipAction(c);
   const has = !!clips.length;
-  for (const id of ['motIdle', 'motGun', 'motBomb']) $(id).disabled = !has;
-  $('motFly').hidden = !roboAnim.actions.fly;
-  if (has) playMotion('idle', 0);
+  $('motionSel').disabled = !has;
+  for (const o of $('motionSel').options) {
+    o.disabled = !roboAnim.actions[o.value];
+    if (o.value === 'fly') o.hidden = !roboAnim.actions.fly;       // Lightning Sky bodies and Ruhiel only
+  }
+  // keep the pose chosen for the previous robo (Fly only exists on the transforming bodies; others fall back to idle)
+  const chosen = roboAnim.selected;
+  if (has) playMotion(roboAnim.actions[chosen] ? chosen : 'idle', 0);
+  if (chosen) roboAnim.selected = chosen;     // a fallback to idle doesn't forget the choice
 }
 
 // Blend times from the parts menu (DOL 0x800528B8): idle blends in over 7 frames, the gun/bomb stances over 3.
-const MENU_BLEND = { idle: 7, gun: 3, bomb: 3 };
+// The walk/run loops and the midair pose use 6 frames: a viewer choice (the battle code's blend is not read).
+const MENU_BLEND = { idle: 7, gun: 3, bomb: 3, walk: 6, run: 6, walk_back: 6, run_back: 6, air: 6 };
 function playMotion(name, fade) {
   if (fade === undefined) fade = (MENU_BLEND[name] || 0) / (roboAnim.fps || 30);
   const A = roboAnim.actions;
@@ -214,7 +242,347 @@ function playMotion(name, fade) {
   if (!next) roboAnim.mixer.stopAllAction();
   else if (prev && prev !== next && !fade) prev.stop();
   roboAnim.current = next;
-  document.querySelectorAll('.motbtn').forEach(b => b.classList.toggle('on', b.dataset.m === name));
+  if (next) roboAnim.selected = name;
+  if (next) $('motionSel').value = name;
+}
+
+// ---- gun attack -------------------------------------------------------------------------------------
+// Fire the equipped gun at a target (attack.js). The Midair stance fires the gun's AIR block, any other stance its
+// GROUND block (the game picks by R+0x139 at the fire input); a ground shot switches to the Gun drawn stance, the
+// firing motion (record slot 20), and both end with the recoil motion over the gun's recovery (onPose).
+const fxLib = new EffectLib(loadGlb);
+// HSD particles (particles.js): weapon effect joints spawn generators through their PTCL keys
+const particles = new ParticleSystem(scene, camera);
+particles.load().then(d => { if (d) setParticles(particles); });
+const attack = new GunAttack({
+  scene, loadGlb, lib: fxLib, sync: followBones,
+  gun: () => (partObj.gun && state.gun >= 0 ? { id: state.gun, obj: partObj.gun } : null),
+  airborne: () => roboAnim.selected === 'air' || mover.airborne,
+  floorY: () => grid.position.y,
+  // the target keeps its place in front of the robo; it holds while the robo is airborne, landing or attacking, and
+  // rises up out of the floor at its new spot once the robo has settled (loop)
+  origin: () => ({ pos: new THREE.Vector3(rig.position.x, 0, rig.position.z),
+                   fwd: new THREE.Vector3(0, 0, -1).applyQuaternion(rig.getWorldQuaternion(new THREE.Quaternion())) }),
+  onFire: air => {
+    if (!air && roboAnim.selected !== 'gun') playMotion('gun');
+    // the muzzle is read on the gun's rest pose (its clip's last frame), which the attack data's muzzle axis matches;
+    // when the game plays the gun's own clip during a shot is not read
+    if (partAnim.gun) { anim.playing = false; holdEnd(partAnim.gun); syncAnimUi(); }
+  },
+  // recovery: the recoil motion at the frame the fire state sets (record slot 25 ground / 22 air)
+  onPose: p => { if (p) holdMotion(p.clip, p.frame); else if (roboAnim.held) endHold(); },
+  onDone: () => { if (roboAnim.held) endHold(); },
+});
+
+/** Show one robo clip at a set frame without changing the chosen stance (the fire state's directly set frames). */
+function holdMotion(name, frame, fadeTicks = 0) {
+  const a = roboAnim.actions[name];
+  if (!a || !roboAnim.mixer) return;
+  if (roboAnim.current !== a) {
+    const prev = roboAnim.current;
+    a.reset();
+    a.setLoop(THREE.LoopOnce, 1);
+    a.clampWhenFinished = true;
+    a.play();
+    if (prev && fadeTicks) prev.crossFadeTo(a, fadeTicks / 60, false);
+    else if (prev) prev.stop();
+    roboAnim.current = a;
+  }
+  roboAnim.held = name;
+  a.paused = true;
+  a.time = frame / (roboAnim.fps || 30);
+}
+
+/** Back to the chosen stance once the recoil ends (the game returns to the move state; the blend is a viewer choice). */
+function endHold() {
+  roboAnim.held = null;
+  const name = roboAnim.selected || 'idle';
+  const a = roboAnim.actions[name];
+  if (a) a.paused = false;
+  playMotion(name);
+}
+
+// ---- bombs and pods (throw.js): same target; the robo can only be in one attack state at a time -------------------
+function boneWorld(role) {
+  const b = roboObj && boneByRole(role);
+  if (!b) return null;
+  b.updateWorldMatrix(true, false);
+  return new THREE.Vector3().setFromMatrixPosition(b.matrixWorld);
+}
+const throwCtx = slot => ({
+  scene, lib: fxLib, sync: followBones, gun: attack,
+  part: () => (partObj[slot] && state[slot] >= 0 ? { id: state[slot], obj: partObj[slot] } : null),
+  body: () => state.robo,
+  airborne: () => roboAnim.selected === 'air' || mover.airborne,
+  floorY: () => grid.position.y,
+  robo: () => {
+    const pos = rig.getWorldPosition(new THREE.Vector3());
+    pos.y = grid.position.y;                                 // R+0x20: the robo's feet
+    return { pos, fwd: new THREE.Vector3(0, 0, -1).applyQuaternion(rig.getWorldQuaternion(new THREE.Quaternion())) };
+  },
+  bone: boneWorld,
+  onPose: p => { if (p) holdMotion(p.clip, p.frame); else if (roboAnim.held) endHold(); },
+  // a blast hit the target: its reaction (bombs / pods: pushed away from the blast)
+  onHit: h => attack.hitTarget(h ? { down: h.X.down, v: h.X.hit_params, from: h.from } : null),
+});
+const bombs = new BombAttack(throwCtx('bomb'));
+const pods = new PodAttack(throwCtx('pod'));
+const acting = () => attack.acting || bombs.acting || pods.acting;
+const blocked = () => acting() || (typeof mover !== 'undefined' && mover.state === 'charge');
+
+// ---- jump, air moves, landing (move.js) and the legs part's effects ---------------------------------------------------
+// Jump: hold for height (up to the legs/body hold ticks), press again in the air for an air move (dash, air jump or
+// the flyers' steerable dash, by body). The robo moves through the world; the camera and the floor follow it.
+const mover = new Mover({
+  fields: () => {
+    const d = mover.data;
+    if (!d) return null;
+    const legs = state.legs >= 0 ? state.legs : 0;
+    const v = d.fields.values[String(state.robo)] && d.fields.values[String(state.robo)][legs];
+    return v ? Object.fromEntries(d.fields.order.map((k, i) => [k, v[i]])) : null;
+  },
+  body: () => mover.data && mover.data.bodies.find(b => b.id === state.robo),
+  facing: () => new THREE.Vector3(0, 0, -1).applyQuaternion(rig.getWorldQuaternion(new THREE.Quaternion())),
+  attacking: () => acting(),
+  position: () => new THREE.Vector3(home.x + mover.pos.x, mover.pos.y, home.z + mover.pos.z),
+  target: () => attack.target,
+  targetRadius: () => attack.targetRadius,
+  onCharge: (ev, m) => chargeEvent(ev, m),
+  onPose: (name, frame, fade) => {
+    if (acting()) return;                       // an attack's own pose (recoil, throw) wins
+    if (name) holdMotion(name, frame, fade);
+    else if (roboAnim.held) endHold();
+  },
+});
+mover.load();
+
+// The legs part's effects (READ, notes\move-effects.md): leg_effect.BIN entry = legs id (16+ copy 0), sets
+//  boost: two instances at the knee nozzles (legs roots 4/5 locator: (4, 0, 0) in the knee root's space, local Z along
+//         its X), started when a boosting tick finds the ramp at 0; the ramp moves 0.05/tick toward 1 while boosting
+//         and toward 0 after, and at 0 the generators are killed (their particles finish);
+//  land:  one instance at the robo's floor position on landing.
+const legFx = { ramp: 0, boost: [], land: [], fx: null, id: -1 };
+async function legFxPrepare() {
+  const id = state.legs >= 0 && state.legs < 16 ? state.legs : 0;
+  if (legFx.id !== id) { legFx.fx = await fxLib.get('leg', id); legFx.id = id; }
+  return legFx.fx;
+}
+function nozzles() {
+  const p = state.legs >= 0 && index.parts.legs.find(x => x.id === state.legs);
+  const obj = partObj.legs;
+  if (!p || !obj) return [];
+  return ['legs0', 'legs2'].map(m => {
+    const r = p.roots.find(x => x.mount === m);
+    const root = r && obj.getObjectByName(r.node);
+    if (!root) return null;
+    let n = root.getObjectByName('nozzle');
+    if (!n) {
+      n = new THREE.Object3D();
+      n.name = 'nozzle';
+      n.position.set(4, 0, 0);
+      n.rotation.y = Math.PI / 2;               // local Z onto the root's X (down the shin)
+      root.add(n);
+    }
+    return n;
+  }).filter(Boolean);
+}
+function legFxTick() {
+  const boosting = mover.state === 'dash' || mover.state === 'airjump' || (mover.airborne && acting());
+  if (boosting && legFx.ramp === 0 && legFx.fx) {
+    for (const n of nozzles()) {
+      const inst = effectInstance(legFx.fx, 'boost');
+      scene.add(inst.root);
+      legFx.boost.push({ inst, node: n, frame: 0 });
+    }
+  }
+  legFx.ramp = THREE.MathUtils.clamp(legFx.ramp + (boosting ? 0.05 : -0.05), 0, 1);
+  for (const b of legFx.boost) {
+    b.node.updateWorldMatrix(true, false);
+    b.inst.root.matrix.copy(b.node.matrixWorld);
+    b.inst.root.matrixWorldNeedsUpdate = true;
+    b.inst.setFrame(++b.frame);
+  }
+  if (legFx.ramp === 0 && legFx.boost.length) {
+    for (const b of legFx.boost) { b.inst.kill(); scene.remove(b.inst.root); }
+    legFx.boost = [];
+  }
+  legFx.land = legFx.land.filter(l => { if (++l.t < 600) return true; l.inst.kill(); scene.remove(l.inst.root); return false; });
+}
+function legFxStep() {
+  const foot = roboObj && boneByRole('foot_R');
+  if (!foot) return;
+  legFxPrepare().then(fx => {
+    if (!fx) return;
+    const inst = effectInstance(fx, 'step');
+    foot.updateWorldMatrix(true, false);
+    inst.root.matrix.copy(foot.matrixWorld);
+    scene.add(inst.root);
+    inst.root.updateMatrixWorld(true);
+    inst.setFrame(0);
+    legFx.land.push({ inst, t: 0 });
+  });
+}
+function legFxLand(pos) {
+  if (!legFx.fx) return;
+  const inst = effectInstance(legFx.fx, 'land');
+  inst.root.matrix.makeTranslation(pos.x, pos.y, pos.z);
+  scene.add(inst.root);
+  inst.root.updateMatrixWorld(true);
+  inst.setFrame(0);
+  legFx.land.push({ inst, t: 0 });
+}
+
+const home = { x: 0, z: 0, last: new THREE.Vector3() };
+
+// ---- collision charge (state 12): the body's aura on the robo, the impact at the hit (attack_effect.BIN[body]) -------
+// READ (notes\move-effects.md 6): the aura (set `charge`) rides the robo matrix (Z = facing, Y = up, at the feet) and
+// plays at 0.5 frame per tick while the charge lasts; the impact (set `impact`) appears once, on the hit, at the
+// robo's position (frozen during phase 1 on some bodies) facing the charge, 20 frames at 1 per tick.
+const charge = { aura: null, impact: [], fx: null, glow: 0 };
+// The robo matrix the effects ride (R+0x194, 0x80039494): Z = normalize(-R+0x170, R+0x174, R+0x178), the facing in the
+// game's velocity space (z already negated) with x negated, i.e. world Z = -facing: like the robo models (which face
+// -z), the effects' +Z points behind the robo.
+function facingMatrix(F, pos) {
+  const z = F.clone().setY(0).normalize().negate(), y = new THREE.Vector3(0, 1, 0), x = new THREE.Vector3().crossVectors(y, z);
+  return new THREE.Matrix4().makeBasis(x, y, z).setPosition(pos);
+}
+function feet(p) { return new THREE.Vector3(home.x + p.x, grid.position.y + p.y, home.z + p.z); }
+async function chargeEvent(ev, m) {
+  if (ev === 'start') {
+    charge.fx = await fxLib.get('attack', state.robo);
+    if (!charge.fx || mover.state !== 'charge') return;
+    const inst = effectInstance(charge.fx, 'charge');
+    scene.add(inst.root);
+    charge.aura = { inst, frame: 0 };
+  } else if (ev === 'hit') {
+    // the charge always knocks down (down -1), launched by the attacker's recipe (+0x20 speed, +0x22 elevation, 100)
+    const C = mover.ctx.body().charge;
+    attack.hitTarget({ down: -1, v: [0, 0, 0, 0, C.launch_speed_raw, C.launch_elev_deg, 100], dir: m.dir });
+    if (charge.fx) {
+      const inst = effectInstance(charge.fx, 'impact');
+      inst.root.matrix.copy(facingMatrix(m.dir, feet(m.anchor)));
+      scene.add(inst.root);
+      inst.root.updateMatrixWorld(true);
+      inst.setFrame(0);
+      charge.impact.push({ inst, frame: 0 });
+    }
+  } else if (ev === 'land') legFxLand(feet(m.pos));
+  else if (ev === 'end') endAura();
+}
+function endAura() {
+  // drawing stops; the aura's generators are not killed in the game (they run out on their own)
+  if (charge.aura) { scene.remove(charge.aura.inst.root); charge.aura = null; }
+}
+function chargeTick() {
+  if (charge.aura && mover.state === 'charge') {
+    charge.aura.inst.root.matrix.copy(facingMatrix(mover.dir, feet(mover.pos)));
+    charge.aura.inst.root.matrixWorldNeedsUpdate = true;
+    charge.aura.frame += 0.5;
+    charge.aura.inst.setFrame(charge.aura.frame);
+  } else if (charge.aura) endAura();
+  charge.impact = charge.impact.filter(c => {
+    c.inst.setFrame(++c.frame);
+    if (c.frame < 20) return true;
+    c.inst.kill(); scene.remove(c.inst.root); return false;      // the end callback kills its generators
+  });
+  // super armour: the body glows red (R+0x187C, x0.95 per tick), drawn as material colour (255 v, 0, 0)
+  const g = mover.state === 'charge' ? mover.glow : charge.glow * 0.95;
+  charge.glow = g;
+  if (roboObj) eachMaterial(roboObj, mt => { if (mt.emissive) mt.emissive.setRGB(g, 0, 0); });
+}
+async function chargePress() {
+  if (acting() || mover.state !== 'ground' || roboAnim.selected === 'air') return;
+  await mover.load();
+  const B = mover.ctx.body();
+  if (!B || !B.charge) return;
+  const C = B.charge, ticks = C.phases.reduce((n, p) => n + p.ticks + 1, 0);
+  if (mover.startCharge()) $('fireLabel').textContent = `Charge: ${ticks} ticks, hits within ${(C.hit_range_units + attack.targetRadius).toFixed(2)} in the second phase, ${C.damage} damage`;
+}
+function moveLabel() {
+  const F = mover.ctx.fields(), B = mover.ctx.body();
+  if (!F || !B) return '';
+  const style = ['dash', 'air jump', B.flies ? 'flying dash' : 'steerable dash'][B.dash_style];
+  const n = B.dash_style === 1 ? B.air_jump_count : B.air_dash_count;
+  const dist = ((F.dash_ticks + 1) * 0.001 * F.dash_speed).toFixed(1);
+  const extra = B.dash_style === 1 ? `air jump ${(0.01 * F.air_jump_height).toFixed(1)} up` : `${style} ${dist} units`;
+  return `Jump ${(0.01 * F.jump_height).toFixed(1)} units (hold), then ${n} × ${extra}`;
+}
+function moveTick() {
+  const wasAir = mover.airborne && mover.state !== 'charge';
+  mover.tick();
+  chargeTick();
+  if (wasAir && !mover.airborne) legFxLand(new THREE.Vector3(home.x + mover.pos.x, grid.position.y, home.z + mover.pos.z));
+  legFxTick();
+}
+function moveUpdate(dt) {
+  mover.acc = Math.min(mover.acc + dt, 0.25);
+  while (mover.acc >= 1 / 60) { moveTick(); mover.acc -= 1 / 60; }
+}
+async function jumpPress() {
+  if (mover.state === 'charge') return;                 // the charge cannot be cancelled
+  if (roboAnim.selected === 'air') { $('fireLabel').textContent = 'Jump starts from a ground stance.'; return; }
+  await mover.load();
+  await legFxPrepare();
+  if (mover.state === 'ground') $('fireLabel').textContent = moveLabel();
+  mover.press();
+}
+function returnHome() {
+  mover.reset();
+  if (roboAnim.held) endHold();
+}
+
+async function fireBomb() {
+  if (blocked()) return;
+  const r = await bombs.fire();
+  const bd = bombs.partData(state.bomb);
+  if (!r) {
+    $('fireLabel').textContent = !bd ? 'No attack data for this bomb.' : bombs.cooldown > 0 ? `Bomb reloading (${bombs.cooldown} ticks).` : '';
+    return;
+  }
+  const b = r.block, X = b.explosion, n = Math.min(bd.bombs_per_launch, b.bombs.length);
+  $('fireLabel').textContent = `${r.air ? 'Air' : 'Ground'} bomb: ${n} bomb${n > 1 ? 's' : ''} to ${b.aim_percent}% of the way, ` +
+    `blast ${X.radius_peak.toFixed(2)}${X.blasts > 1 ? ` × ${X.blasts}` : ''}, fuse ${b.fuse_ticks}, reload ${b.cooldown_ticks}`;
+}
+
+async function firePod() {
+  if (blocked()) return;
+  const r = await pods.fire();
+  const pd = pods.partData(state.pod);
+  if (!r) { $('fireLabel').textContent = pd ? '' : 'No attack data for this pod.'; return; }
+  if (r.full) { $('fireLabel').textContent = `${r.name}: ${r.max} already out.`; return; }
+  $('fireLabel').textContent = `${r.air ? 'Air' : 'Ground'} pod: ${pd.per_use} per use, up to ${pd.max_alive} out, ` +
+    `life ${pd.life_ticks}, lock ${pd.lock.range} / ${pd.lock.view_angle_deg}°`;
+}
+
+async function fireGun() {
+  if (blocked()) return;
+  const r = await attack.fire();
+  const gd = attack.gunData(state.gun);
+  if (!r) { if (!attack.busy) $('fireLabel').textContent = gd ? '' : 'No attack data for this gun.'; return; }
+  const b = r.air ? gd.air : gd.ground;
+  $('fireLabel').textContent = `${r.air ? 'Air' : 'Ground'} shot: ${b.volleys} volley${b.volleys > 1 ? 's' : ''} × ` +
+    `${b.rounds_per_volley} round${b.rounds_per_volley > 1 ? 's' : ''}, range ${Math.round(b.range)}`;
+}
+
+function shotView() {
+  attack.placeTarget();
+  // the actual gap (the target may have been knocked further away than the distance setting)
+  const rp = rig.getWorldPosition(new THREE.Vector3());
+  const d = Math.max(attack.distance, Math.hypot(attack.target.x - rp.x, attack.target.z - rp.z));
+  const c = rig.getWorldPosition(new THREE.Vector3()).lerp(attack.target, 0.5);
+  c.y = 0.3;
+  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(rig.getWorldQuaternion(new THREE.Quaternion()));
+  const side = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
+  // fit the robo-to-target span (plus a margin) across the narrower of the two fields of view
+  const half = d * 0.65 + 2;
+  const vfov = THREE.MathUtils.degToRad(camera.fov) / 2;
+  const hfov = Math.atan(Math.tan(vfov) * camera.aspect);
+  const dist = Math.max(6, half / Math.tan(Math.min(vfov, hfov)));
+  camera.position.copy(c).addScaledVector(side, -dist).add(new THREE.Vector3(0, dist * 0.15, 0));
+  controls.target.copy(c);
+  camera.near = 0.05;
+  camera.far = 400;
+  camera.updateProjectionMatrix();
 }
 
 function menuStance(slot) {
@@ -223,9 +591,88 @@ function menuStance(slot) {
   if (!roboAnim.current || roboAnim.current.getClip().name !== want) playMotion(want);
 }
 
+// ---- battle ground movement (notes\move-speed.md in the extract folder; READ from the DOL) ----------------------
+// Max speed S blends the body's (lo, mid, hi) triple by the legs' position p (0x80006658); the steady speed is
+// 0.1·S·|stick| per tick and the robo moves 0.01·speed per tick at 60 Hz (0x80049D08, 0x8004C740). The walk/run
+// frame step is 30·0.035·speed / (legLength / 0.61); above 0.1·30 it runs and the step is ×0.18 (0x80049E90,
+// 0x80049FFC). Run = full stick; walk = the fastest speed that still walks (any slower stick also walks).
+// Back loops move at the same speed (the formula has no direction term).
+const MOVE = { kSpeed: 0.1, kPos: 0.01, tick: 60, stride: 0.035, legRef: 0.61, runRate: 0.18, fps: 30 };
+function legsPos() {
+  const p = state.legs >= 0 && index.parts.legs.find(x => x.id === state.legs);
+  return p && p.move ? p.move.pos : 100;     // no legs equipped: the body's mid value
+}
+function gaitFor(name) {
+  const mv = index.robos[state.robo].move;
+  const base = name.replace('_back', '');
+  if (!mv || (base !== 'walk' && base !== 'run')) return null;
+  const [lo, mid, hi] = mv.speed, p = legsPos();
+  const S = Math.trunc(p <= 100 ? lo + (p * (mid - lo)) / 100 : mid + ((p - 100) * (hi - mid)) / 100);
+  const legRatio = mv.legLength / MOVE.legRef;
+  const vmax = MOVE.kSpeed * S;
+  const walkTop = MOVE.kSpeed * legRatio / MOVE.stride;        // step / 30 == 0.1
+  const v = base === 'run' ? vmax : Math.min(walkTop, vmax);
+  const step = MOVE.fps * MOVE.stride * v / legRatio;
+  const runs = step / MOVE.fps > MOVE.kSpeed;
+  const framesPerTick = runs ? step * MOVE.runRate : step;
+  return { speed: v * MOVE.kPos * MOVE.tick * (name.endsWith('_back') ? -1 : 1),   // model units / s along facing
+           rate: framesPerTick * MOVE.tick / MOVE.fps };                            // × the clip's 30 fps
+}
+
+// While a walk/run loop plays (in place, as the game's pose code leaves it), its playback rate follows the game's
+// frame step and the floor grid scrolls under the robo at the game's ground speed, both from the body + legs.
+// Speeds are weighted by each action's blend weight, so the floor eases in and out with the cross-fade.
+const GRID_CELL = GRID_SIZE / GRID_DIV;
+const gridScroll = { x: 0, z: 0 };
+const _floorV = new THREE.Vector3();
+const _rigQ = new THREE.Quaternion();
+const AIR_LIFT = 0.6;      // model units
+// the midair pose and every clip the robo holds while attacking in the air (recoil, bomb throw, pod deploy)
+const AIR_CLIPS = ['air', 'air_recoil', 'bomb_air', 'pod_air'];
 function stepRobo(dt) {
   if (!roboAnim.mixer) return;
+  let speed = 0;
+  for (const [name, a] of Object.entries(roboAnim.actions)) {
+    const g = gaitFor(name);
+    if (!g) continue;
+    a.timeScale = g.rate;
+    if (a.isRunning()) speed += g.speed * a.getEffectiveWeight();
+  }
+  const runT = {};
+  for (const n of ['run', 'run_back']) { const a = roboAnim.actions[n]; if (a && a.isRunning()) runT[n] = a.time; }
   roboAnim.mixer.update(dt);
+  // run dust (READ, notes\move-effects.md): motion event at frame 25 of the run cycles spawns the legs part's
+  // step effect at the right foot (bone 17)
+  for (const [n, t0] of Object.entries(runT)) {
+    const a = roboAnim.actions[n], ev = 25 / (roboAnim.fps || 30), t1 = a.time;
+    if ((t0 < ev && t1 >= ev) || (t1 < t0 && (t0 < ev || t1 >= ev))) legFxStep();
+  }
+  // midair: lift the robo off the floor with the pose's blend weight. The pose is built at standing hip height and
+  // its toes reach below the floor; the height is a viewer choice (the game's jump height is not read yet).
+  // (the air recoil is held paused, so count scheduled rather than running actions)
+  let airW = 0;
+  for (const n of AIR_CLIPS) {
+    const a = roboAnim.actions[n];
+    if (a && a.isScheduled()) airW += a.getEffectiveWeight();
+  }
+  if (mover.active) rig.position.set(home.x + mover.pos.x, mover.pos.y, home.z + mover.pos.z);
+  else rig.position.set(home.x, AIR_LIFT * Math.min(airW, 1) + (DOWN_POSES.includes(roboAnim.selected) ? downLift : 0), home.z);
+  // the camera follows the robo across the floor; the floor's lines and fade stay centred on it
+  // (height too: a 2-unit jump leaves a close view otherwise, and Return brings the view back with the robo)
+  const dx = rig.position.x - home.last.x, dz = rig.position.z - home.last.z, dy = rig.position.y - home.last.y;
+  if (dx || dy || dz) { camera.position.x += dx; camera.position.y += dy; camera.position.z += dz;
+    controls.target.x += dx; controls.target.y += dy; controls.target.z += dz; }
+  home.last.copy(rig.position);
+  floorCentre.value.set(rig.position.x, rig.position.z);
+  roboFloorClip.constant = -grid.position.y;          // keep y >= the floor (world)
+  grid.position.x = gridScroll.x + Math.round(rig.position.x / GRID_CELL) * GRID_CELL;
+  grid.position.z = gridScroll.z + Math.round(rig.position.z / GRID_CELL) * GRID_CELL;
+  if (!speed) return;
+  // model +z (the planted foot's direction) in world space, through the rig's turn
+  _floorV.set(0, 0, speed * dt).applyQuaternion(rig.getWorldQuaternion(_rigQ));
+  const wrap = v => ((v % GRID_CELL) + GRID_CELL) % GRID_CELL;
+  gridScroll.x = wrap(gridScroll.x + _floorV.x);
+  gridScroll.z = wrap(gridScroll.z + _floorV.z);
 }
 
 async function setPart(slot, id) {
@@ -252,6 +699,7 @@ async function setPart(slot, id) {
     holdEnd(partAnim[slot]);
   }
   rig.add(obj);
+  if (slot === 'legs' && roboObj && state.robo !== undefined) updateFloor();   // legs parts change the foot height
   applyView();
   syncAnimUi();
   if (slot === statSlot) showPartStats();
@@ -276,7 +724,6 @@ function poseAt(f) {
     a.mixer.update(0);
   }
   $('animFrame').value = f;
-  $('animLabel').textContent = `frame ${f.toFixed(1)} / ${maxFrames()}`;
 }
 
 // Parts rest on the last frame of their clip. Most clips end on the stored rest pose; Standard Bomb's starts there
@@ -302,7 +749,6 @@ function syncAnimUi() {
   $('animFrame').disabled = $('animPlay').disabled = !n;
   if (anim.frame == null) {
     $('animFrame').value = n;
-    $('animLabel').textContent = n ? `deployed (clip: ${n} frames)` : 'no animation';
   } else poseAt(Math.min(anim.frame, n));
   $('animPlay').textContent = anim.playing ? 'Stop' : 'Play';
 }
@@ -318,8 +764,9 @@ function playPartClip(slot) {
   a.mixer.update(0);
 }
 
+const PART_ANIM_SPEED = 0.25;   // part clips play at 1/4 speed (the old speed selector's default)
 function stepAnim(dt) {
-  const speed = Number($('animSpeed').value);
+  const speed = PART_ANIM_SPEED;
   for (const a of Object.values(partAnim)) {
     if (a.solo == null) continue;
     a.solo = Math.min(a.solo + dt * 60 * speed, a.frames);
@@ -338,11 +785,6 @@ function applyView() {
   const wire = $('optWire').checked;
   for (const o of [roboObj, ...Object.values(partObj)]) if (o) eachMaterial(o, m => { m.wireframe = wire; });
   grid.visible = $('optGrid').checked;
-  if (skelHelper) { scene.remove(skelHelper); skelHelper = null; }
-  if ($('optBones').checked && roboObj) {
-    skelHelper = new THREE.SkeletonHelper(roboObj);
-    scene.add(skelHelper);
-  }
 }
 
 function bounds() {
@@ -351,11 +793,68 @@ function bounds() {
   return box;
 }
 
+// ---- floor: under the lowest point of the idle loop -------------------------------------------------------------
+// Skinned meshes keep bind-pose bounds, so the floor is measured on the posed vertices: the robo and its parts (legs
+// parts sit under the feet) at 31 frames across the idle loop, lowest point over all of them, relative to the rig.
+let floorY = null;
+function idleFloor(samples = 30, clipName = 'idle', slots = null) {
+  const clip = (roboObj.userData.clips || []).find(c => c.name === clipName);
+  const saved = [];
+  roboObj.traverse(o => { if (o.isBone) saved.push([o, o.position.clone(), o.quaternion.clone(), o.scale.clone()]); });
+  const objs = [roboObj, ...(slots ? slots.map(k => partObj[k]) : Object.values(partObj)).filter(Boolean)];
+  const box = new THREE.Box3();
+  let low = Infinity;
+  const measure = () => {
+    rig.updateMatrixWorld(true);
+    followBones();
+    for (const o of objs) { o.updateMatrixWorld(true); box.makeEmpty().expandByObject(o, true); if (!box.isEmpty()) low = Math.min(low, box.min.y); }
+  };
+  if (clip) {
+    const mx = new THREE.AnimationMixer(roboObj);
+    mx.clipAction(clip).play();
+    for (let k = 0; k <= samples; k++) { mx.setTime(clip.duration * k / samples); measure(); }
+    mx.stopAllAction();
+    mx.uncacheRoot(roboObj);
+  } else measure();
+  // back to the pose the robo had (its own mixer re-applies the current motion)
+  for (const [o, p, q, sc] of saved) { o.position.copy(p); o.quaternion.copy(q); o.scale.copy(sc); }
+  if (roboAnim.mixer) roboAnim.mixer.update(0);
+  rig.updateMatrixWorld(true);
+  followBones();
+  return low - rig.position.y;
+}
+
+// The Down poses lie lower than the idle feet: the robo is lifted so its body and legs part rest on the floor. Parts
+// that still reach below it (pods on the back) are cut off at the floor, as the game's solid floor hides them.
+const DOWN_POSES = ['down', 'down_face'];
+let downLift = 0;
+const roboFloorClip = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function updateDownLift() {
+  downLift = 0;
+  const down = !!roboObj && DOWN_POSES.includes(roboAnim.selected);
+  for (const o of [roboObj, ...Object.values(partObj)]) if (o) eachMaterial(o, m => {
+    const want = down ? [roboFloorClip] : null;
+    if ((m.clippingPlanes || null) !== want && !(m.clippingPlanes && want)) { m.clippingPlanes = want; m.needsUpdate = true; }
+  });
+  if (!down || floorY === null) return;
+  downLift = Math.max(0, floorY - idleFloor(1, roboAnim.selected, ['legs']));
+}
+
+function updateFloor() {
+  if (!roboObj) return;
+  // measured relative to the rig, so it holds in every stance: a midair robo is lifted above this same floor, and
+  // swapping robos or legs midair moves the floor to the new robo's idle level at once
+  floorY = idleFloor();
+  grid.position.y = floorY;
+  updateDownLift();
+}
+
 function frame(dir = [0, 0.15, 1]) {
   if (!roboObj) return;
   rig.updateMatrixWorld(true);
   const box = bounds();
-  grid.position.y = box.min.y;
+  updateFloor();
+  box.min.y = Math.min(box.min.y, floorY + rig.position.y);     // bind-pose bounds can miss the posed feet
   const c = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3()).length();
   const d = new THREE.Vector3(...dir).normalize().multiplyScalar(size * 1.6);
@@ -377,15 +876,30 @@ function resize() {
 
 const clock = new THREE.Clock();
 function loop() {
-  resize();
   const dt = Math.min(clock.getDelta(), 0.1);
+  if (window.__freeze) renderer.render(scene, camera);   // test hook: frames advance only through frameStep
+  else frameStep(dt);
+  requestAnimationFrame(loop);
+}
+
+/** One frame of the viewer (also driven by hand in tests while the page is hidden). */
+function frameStep(dt) {
+  resize();
   stepAnim(dt);
+  moveUpdate(dt);
   stepRobo(dt);
   followBones();
-  if ($('optSpin').checked) rig.rotation.y += 0.006;
-  controls.update();
+  attack.targetGroup.visible = $('optTarget').checked;
+  if (!attack.busy && !bombs.busy && !pods.busy && mover.state === 'ground') attack.placeTarget();
+  attack.update(dt);
+  bombs.update(dt);
+  pods.update(dt);
+  // Turntable: orbit the camera round the target (the model stays put); 3.44 = the old 0.36 rad/s
+  controls.autoRotate = $('optSpin').checked;
+  controls.autoRotateSpeed = 3.44;
+  controls.update(dt);
+  particles.update(dt);          // after the camera moves: the quads face this frame's camera
   renderer.render(scene, camera);
-  requestAnimationFrame(loop);
 }
 
 function status(s) { $('status').textContent = s; }
@@ -393,12 +907,12 @@ function status(s) { $('status').textContent = s; }
 // ---- UI ------------------------------------------------------------------------------------------
 function label(x) { return x.name + (x.tag === 'illegal' ? ' ★' : ''); }
 
+// Every part is listed: the game's "illegal" flag only bars parts from restricted play, so the viewer shows them all
+// (still starred).
 function fillParts() {
-  const showIllegal = $('optIllegal').checked;
   for (const s of SLOTS) {
     const sel = $('sel-' + s);
     sel.innerHTML = '<option value="-1">— none —</option>' + index.parts[s]
-      .filter(p => showIllegal || p.tag !== 'illegal' || p.id === state[s])
       .map(p => `<option value="${p.id}">${label(p)}</option>`).join('');
     sel.value = String(state[s]);
   }
@@ -571,6 +1085,9 @@ function wire() {
   for (const s of SLOTS) $('sel-' + s).onchange = async e => {
     state[s] = +e.target.value;
     writeHash();
+    if (s === 'gun') attack.clear();
+    if (s === 'bomb') bombs.clear();
+    if (s === 'pod') pods.clear();
     await setPart(s, state[s]);
     menuStance(s);
     playPartClip(s);
@@ -578,8 +1095,7 @@ function wire() {
   // The parts menu (DOL 0x80101418) shows the gun / bomb stance while its cursor is on that category, and idle
   // on body, pod and legs; focusing a part list does the same here.
   for (const s of SLOTS) $('sel-' + s).addEventListener('focus', () => menuStance(s));
-  ['optGrid', 'optWire', 'optBones'].forEach(id => $(id).onchange = applyView);
-  $('optIllegal').onchange = fillParts;
+  ['optGrid', 'optWire'].forEach(id => $(id).onchange = applyView);
   $('frontBtn').onclick = () => frame([0, 0.15, 1]);
   $('sideBtn').onclick = () => frame([1, 0.15, 0]);
   $('backBtn').onclick = () => frame([0, 0.15, -1]);
@@ -592,21 +1108,38 @@ function wire() {
     syncAnimUi();
   };
   $('animFrame').oninput = e => { anim.playing = false; poseAt(Number(e.target.value)); syncAnimUi(); };
-  $('animRest').onclick = restPose;
   // cycle the part stat chart through Gun / Bomb / Pod / Legs without touching the part lists
   const cycleStats = d => showPartStats(SLOTS[(SLOTS.indexOf(statSlot) + d + SLOTS.length) % SLOTS.length]);
   $('statPrev').onclick = () => cycleStats(-1);
   $('statNext').onclick = () => cycleStats(1);
   $('themeBtn').onclick = () => setTheme((themeIndex() + 1) % THEMES.length);
-  $('motIdle').onclick = () => playMotion('idle');
-  $('motGun').onclick = () => playMotion('gun');
-  $('motBomb').onclick = () => playMotion('bomb');
-  $('motFly').onclick = () => playMotion('fly', 0.1);
+  $('motionSel').onchange = e => { playMotion(e.target.value, e.target.value === 'fly' ? 0.1 : undefined); updateDownLift(); };
+  $('fireBtn').onclick = fireGun;
+  $('bombBtn').onclick = fireBomb;
+  // Jump: held while the button / Space is down (the jump rises while held, up to the hold ticks)
+  const jb = $('jumpBtn');
+  jb.addEventListener('pointerdown', e => { e.preventDefault(); jumpPress(); });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) jb.addEventListener(ev, () => mover.release());
+  $('homeBtn').onclick = returnHome;
+  $('chargeBtn').onclick = chargePress;
+  $('podBtn').onclick = firePod;
+  $('shotViewBtn').onclick = shotView;
+  $('targetDist').oninput = e => { attack.distance = +e.target.value; $('targetDistVal').textContent = e.target.value; };
+  addEventListener('keyup', e => { if (e.key === ' ') mover.release(); });
+  addEventListener('keydown', e => {
+    if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    const k = e.key.toLowerCase();
+    if (k === ' ') { e.preventDefault(); if (!e.repeat) jumpPress(); return; }
+    if (k === 'c') { chargePress(); return; }
+    if (k === 'f') fireGun();
+    else if (k === 'b') fireBomb();
+    else if (k === 'p') firePod();
+  });
   $('randBtn').onclick = () => {
     const pick = a => a[Math.floor(Math.random() * a.length)].id;
-    const legal = s => index.parts[s].filter(p => $('optIllegal').checked || p.tag !== 'illegal');
-    apply({ robo: state.robo, colour: state.colour, gun: pick(legal('gun')), bomb: pick(legal('bomb')),
-            pod: pick(legal('pod')), legs: pick(legal('legs')) });
+    const all = s => index.parts[s];
+    apply({ robo: state.robo, colour: state.colour, gun: pick(all('gun')), bomb: pick(all('bomb')),
+            pod: pick(all('pod')), legs: pick(all('legs')) });
   };
   $('shotBtn').onclick = () => {
     renderer.render(scene, camera);
@@ -639,6 +1172,69 @@ function wire() {
   addEventListener('hashchange', () => apply(readHash()));
 }
 
+// ---- target dummy: Oil Can with the Can parts, posed in its idle stance and drawn in the target's wireframe ----------
+const DUMMY = { robo: 25, gun: 33, bomb: 31, pod: 35, legs: 10 };
+async function buildDummy() {
+  const r = index.robos[DUMMY.robo];
+  if (!r) return;
+  const robo = await loadGlb(r.glb);
+  const root = new THREE.Group();
+  root.add(robo);
+  // its own motions (idle, falls, landing, get-up), each shown at a set frame by the reaction (react.js)
+  const mixer = new THREE.AnimationMixer(robo);
+  const actions = Object.fromEntries((robo.userData.clips || []).map(c => [c.name, mixer.clipAction(c)]));
+  let current = null;
+  const setPose = (name, frame = 0) => {
+    const a = actions[name || 'idle'] || actions.idle;
+    if (!a) return;
+    if (current !== a) {
+      if (current) current.stop();
+      a.reset(); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; a.play();
+      current = a;
+    }
+    a.paused = true;
+    a.time = (name ? frame : 0) / 30;
+    mixer.update(0);
+  };
+  setPose(null);
+  robo.updateMatrixWorld(true);
+  let sk = null;
+  robo.traverse(o => { if (o.isSkinnedMesh) sk = o.skeleton; });
+  const bone = role => { let f = null; robo.traverse(o => { if (!f && o.isBone && o.name.endsWith('_' + role)) f = o; }); return f; };
+  const follow = [];
+  for (const slot of SLOTS) {
+    const p = index.parts[slot].find(x => x.id === DUMMY[slot]);
+    if (!p) continue;
+    const obj = await loadGlb(p.glb);
+    // the same mount rule as the robo's parts (placeRoots + followBones)
+    for (const m of p.roots) {
+      const node = obj.getObjectByName(m.node), b = bone(MOUNT_ROLE[m.mount]);
+      if (!node || !r.mounts[m.mount]) continue;
+      const mount = new THREE.Matrix4().fromArray(r.mounts[m.mount]);
+      node.matrixAutoUpdate = false;
+      node.matrix.copy(mount);
+      if (b && sk) follow.push({ node, bone: b, offset: sk.boneInverses[sk.bones.indexOf(b)].clone().multiply(mount) });
+    }
+    // parts held at the end of their action clip: their rest pose
+    const pc = obj.userData.clips && obj.userData.clips[0];
+    if (pc) { const mx = new THREE.AnimationMixer(obj); const a = mx.clipAction(pc); a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; a.play(); mx.setTime(pc.duration); }
+    root.add(obj);
+  }
+  const inv = new THREE.Matrix4(), m = new THREE.Matrix4();
+  const update = () => {
+    robo.updateMatrixWorld(true);
+    inv.copy(robo.matrixWorld).invert();
+    for (const f of follow) { m.multiplyMatrices(inv, f.bone.matrixWorld); f.node.matrix.multiplyMatrices(m, f.offset); f.node.matrixWorldNeedsUpdate = true; }
+  };
+  update();
+  root.updateMatrixWorld(true);
+  // feet: the lowest point of the posed model
+  const box = new THREE.Box3().setFromObject(root, true);
+  const hr = await fetch('data/hit_reactions.json', { cache: 'no-cache' }).then(x => (x.ok ? x.json() : null)).catch(() => null);
+  const body = hr && hr.bodies.find(x => x.id === DUMMY.robo);
+  attack.setDummy(root, box.min.y, body ? body.hurt_radius : 0.3, { setPose, update, body });
+}
+
 async function main() {
   index = await (await fetch('data/index.json', { cache: 'no-cache' })).json();
   stats = await fetch('data/stats.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null);
@@ -647,8 +1243,9 @@ async function main() {
   wire();
   await apply(readHash());
   showPartStats();
+  bombs.load().then(buildDummy).catch(err => console.error('target dummy', err));
   document.body.classList.remove('booting');
   requestAnimationFrame(loop);
 }
 main().catch(err => { status('Failed to load: ' + err.message); console.error(err); });
-window.__viewer = { state, get index() { return index; }, partObj, partAnim, get robo() { return roboObj; }, rig, camera };
+window.__viewer = { frameStep, mover, charge, chargePress, legFx, moveTick, jumpPress, updateFloor, idleFloor, get floorY() { return floorY; }, grid, attack, bombs, pods, particles, state, get index() { return index; }, partObj, partAnim, get robo() { return roboObj; }, rig, camera, roboAnim, gaitFor };
