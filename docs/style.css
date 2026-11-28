@@ -35,7 +35,7 @@ body{font-family:"CR Message","Segoe UI",system-ui,sans-serif;font-synthesis:non
 /* Panels: square-cornered with a --panel-edge outline (red: Raven, 2026-11-26), filled with Raven's UI texture
    (App Textures/Background.tif -> ui/panel_bg.png) tiled 1:1 and darkened by --panel-shade. */
 .panel{border:var(--panel-edge-w) solid var(--panel-edge);border-radius:0;overflow:clip;
-  background:linear-gradient(var(--panel-shade),var(--panel-shade)),url("ui/panel_bg.png") repeat left top,var(--bg2);
+  background:linear-gradient(var(--panel-shade),var(--panel-shade)),url("ui/panel_bg.png?v=2") repeat left top,var(--bg2);
   background-size:auto,var(--panel-tex-size,auto),auto;image-rendering:pixelated}
 /* --panel-tex-size is set by app.js so one texture pixel covers a whole number of screen pixels at any
    devicePixelRatio (at 1.5, 1 px rows otherwise alternate 1 and 2 screen pixels: light and dark bands). */
