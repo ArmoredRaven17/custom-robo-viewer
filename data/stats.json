@@ -1,0 +1,2987 @@
+{
+ "source": "Custom Robo (USA) GXCE01 main.dol, READ 2026-11-26 (notes/stats.md)",
+ "table": "0x8023a004 (0x14-byte records, u8[5] at +0, pack order)",
+ "bar": {
+  "sprite": "sprite/custom.tpl#55",
+  "segments": 5,
+  "segment_px": 5,
+  "width_px": 25,
+  "note": "bands top->bottom red..yellow; n segments show the bottom 5n rows"
+ },
+ "categories": {
+  "body": {
+   "labels": [
+    "DWN",
+    "DEF",
+    "SPD",
+    "SKY",
+    "ATK"
+   ],
+   "max": 10,
+   "segments": 5,
+   "per_segment": 2,
+   "half_segment": "odd values add a 3-px half segment",
+   "sprite": "sprite/custom.tpl#54",
+   "type_sprites": {
+    "normal": "sprite/custom.tpl#1",
+    "armor": "sprite/custom.tpl#0",
+    "speed": "sprite/custom.tpl#2",
+    "others": "sprite/custom.tpl#83"
+   }
+  },
+  "gun": {
+   "labels": [
+    "ATK",
+    "SPD",
+    "HMG",
+    "RPD",
+    "DWN"
+   ],
+   "max": 5,
+   "segments": 5,
+   "per_segment": 1,
+   "sprite": "sprite/custom.tpl#52"
+  },
+  "bomb": {
+   "labels": [
+    "ATK",
+    "SPD",
+    "SIZ",
+    "TIM",
+    "DWN"
+   ],
+   "max": 5,
+   "segments": 5,
+   "per_segment": 1,
+   "sprite": "sprite/custom.tpl#51"
+  },
+  "pod": {
+   "labels": [
+    "ATK",
+    "SPD",
+    "HMG",
+    "SIZ",
+    "TIM"
+   ],
+   "max": 5,
+   "segments": 5,
+   "per_segment": 1,
+   "sprite": "sprite/custom.tpl#53"
+  },
+  "legs": {
+   "labels": [],
+   "max": 0,
+   "segments": 0,
+   "sprite": null,
+   "note": "no chart: label hidden and every legs record is 0"
+  }
+ },
+ "robos": [
+  {
+   "id": 0,
+   "name": "Ray 01",
+   "stats": [
+    5,
+    6,
+    5,
+    5,
+    7
+   ],
+   "type": "normal",
+   "menu_pos": 0
+  },
+  {
+   "id": 1,
+   "name": "Splendor",
+   "stats": [
+    5,
+    7,
+    4,
+    5,
+    8
+   ],
+   "type": "armor",
+   "menu_pos": 1
+  },
+  {
+   "id": 2,
+   "name": "Glory",
+   "stats": [
+    5,
+    5,
+    6,
+    5,
+    8
+   ],
+   "type": "speed",
+   "menu_pos": 2
+  },
+  {
+   "id": 3,
+   "name": "Milky Way",
+   "stats": [
+    4,
+    4,
+    6,
+    7,
+    5
+   ],
+   "type": "normal",
+   "menu_pos": 3
+  },
+  {
+   "id": 4,
+   "name": "Earth",
+   "stats": [
+    4,
+    5,
+    5,
+    7,
+    5
+   ],
+   "type": "armor",
+   "menu_pos": 4
+  },
+  {
+   "id": 5,
+   "name": "Sol",
+   "stats": [
+    4,
+    3,
+    6,
+    7,
+    6
+   ],
+   "type": "speed",
+   "menu_pos": 5
+  },
+  {
+   "id": 6,
+   "name": "Metal Ape",
+   "stats": [
+    10,
+    8,
+    3,
+    3,
+    4
+   ],
+   "type": "normal",
+   "menu_pos": 6
+  },
+  {
+   "id": 7,
+   "name": "Metal Bear",
+   "stats": [
+    10,
+    9,
+    2,
+    3,
+    10
+   ],
+   "type": "armor",
+   "menu_pos": 7
+  },
+  {
+   "id": 8,
+   "name": "Metal Ox",
+   "stats": [
+    10,
+    7,
+    4,
+    3,
+    8
+   ],
+   "type": "speed",
+   "menu_pos": 8
+  },
+  {
+   "id": 9,
+   "name": "Swift",
+   "stats": [
+    1,
+    2,
+    9,
+    5,
+    3
+   ],
+   "type": "normal",
+   "menu_pos": 9
+  },
+  {
+   "id": 10,
+   "name": "Shrike",
+   "stats": [
+    1,
+    3,
+    8,
+    5,
+    4
+   ],
+   "type": "armor",
+   "menu_pos": 10
+  },
+  {
+   "id": 11,
+   "name": "Peregrine",
+   "stats": [
+    1,
+    1,
+    10,
+    5,
+    5
+   ],
+   "type": "speed",
+   "menu_pos": 11
+  },
+  {
+   "id": 12,
+   "name": "Javelin",
+   "stats": [
+    5,
+    6,
+    4,
+    4,
+    2
+   ],
+   "type": "normal",
+   "menu_pos": 12
+  },
+  {
+   "id": 13,
+   "name": "Glaive",
+   "stats": [
+    5,
+    7,
+    3,
+    4,
+    4
+   ],
+   "type": "armor",
+   "menu_pos": 13
+  },
+  {
+   "id": 14,
+   "name": "Halberd",
+   "stats": [
+    5,
+    5,
+    5,
+    4,
+    8
+   ],
+   "type": "speed",
+   "menu_pos": 14
+  },
+  {
+   "id": 15,
+   "name": "Criminal",
+   "stats": [
+    5,
+    5,
+    3,
+    8,
+    6
+   ],
+   "type": "normal",
+   "menu_pos": 15
+  },
+  {
+   "id": 16,
+   "name": "Buggy",
+   "stats": [
+    5,
+    6,
+    3,
+    7,
+    8
+   ],
+   "type": "armor",
+   "menu_pos": 16
+  },
+  {
+   "id": 17,
+   "name": "Juggler",
+   "stats": [
+    5,
+    4,
+    3,
+    9,
+    5
+   ],
+   "type": "speed",
+   "menu_pos": 17
+  },
+  {
+   "id": 18,
+   "name": "Defender",
+   "stats": [
+    3,
+    3,
+    3,
+    8,
+    9
+   ],
+   "type": "normal",
+   "menu_pos": 18
+  },
+  {
+   "id": 19,
+   "name": "Seeker",
+   "stats": [
+    3,
+    4,
+    3,
+    7,
+    9
+   ],
+   "type": "armor",
+   "menu_pos": 19
+  },
+  {
+   "id": 20,
+   "name": "Breaker",
+   "stats": [
+    3,
+    2,
+    3,
+    9,
+    9
+   ],
+   "type": "speed",
+   "menu_pos": 20
+  },
+  {
+   "id": 21,
+   "name": "Seal Head",
+   "stats": [
+    7,
+    9,
+    3,
+    9,
+    6
+   ],
+   "type": "normal",
+   "menu_pos": 21
+  },
+  {
+   "id": 22,
+   "name": "Dour Head",
+   "stats": [
+    7,
+    10,
+    3,
+    7,
+    6
+   ],
+   "type": "armor",
+   "menu_pos": 22
+  },
+  {
+   "id": 23,
+   "name": "Tank Head",
+   "stats": [
+    7,
+    8,
+    3,
+    10,
+    8
+   ],
+   "type": "speed",
+   "menu_pos": 23
+  },
+  {
+   "id": 24,
+   "name": "Ray Legend",
+   "stats": [
+    4,
+    1,
+    10,
+    10,
+    6
+   ],
+   "tag": "illegal",
+   "type": "others",
+   "menu_pos": 27
+  },
+  {
+   "id": 25,
+   "name": "Oil Can",
+   "stats": [
+    1,
+    3,
+    5,
+    5,
+    8
+   ],
+   "tag": "can",
+   "type": "others",
+   "menu_pos": 29
+  },
+  {
+   "id": 26,
+   "name": "Ray Warrior",
+   "stats": [
+    9,
+    9,
+    5,
+    5,
+    10
+   ],
+   "tag": "illegal",
+   "type": "others",
+   "menu_pos": 28
+  },
+  {
+   "id": 27,
+   "name": "Rakansen",
+   "stats": [
+    5,
+    5,
+    8,
+    6,
+    8
+   ],
+   "tag": "illegal",
+   "type": "others",
+   "menu_pos": 24
+  },
+  {
+   "id": 28,
+   "name": "Ruhiel",
+   "stats": [
+    5,
+    4,
+    5,
+    9,
+    8
+   ],
+   "tag": "illegal",
+   "type": "others",
+   "menu_pos": 25
+  },
+  {
+   "id": 29,
+   "name": "Athena",
+   "stats": [
+    5,
+    5,
+    5,
+    10,
+    8
+   ],
+   "tag": "illegal",
+   "type": "others",
+   "menu_pos": 26
+  },
+  {
+   "id": 30,
+   "name": "Rahu I",
+   "stats": [
+    5,
+    6,
+    5,
+    8,
+    9
+   ],
+   "tag": "illegal",
+   "type": "others",
+   "menu_pos": 30
+  },
+  {
+   "id": 31,
+   "name": "Rahu II",
+   "stats": [
+    7,
+    6,
+    5,
+    9,
+    10
+   ],
+   "tag": "illegal",
+   "type": "others",
+   "menu_pos": 31
+  },
+  {
+   "id": 32,
+   "name": "Rahu III",
+   "stats": [
+    10,
+    10,
+    4,
+    10,
+    10
+   ],
+   "tag": "illegal",
+   "type": "others",
+   "menu_pos": 32
+  },
+  {
+   "id": 33,
+   "name": "Chickenheart",
+   "stats": [
+    5,
+    5,
+    3,
+    7,
+    5
+   ],
+   "type": "others",
+   "menu_pos": 33
+  }
+ ],
+ "parts": {
+  "gun": [
+   {
+    "id": 0,
+    "name": "Basic Gun",
+    "stats": [
+     3,
+     2,
+     1,
+     2,
+     2
+    ]
+   },
+   {
+    "id": 1,
+    "name": "3-Way Gun",
+    "stats": [
+     3,
+     3,
+     2,
+     3,
+     2
+    ]
+   },
+   {
+    "id": 2,
+    "name": "Gatling Gun",
+    "stats": [
+     2,
+     3,
+     1,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 3,
+    "name": "Vertical Gun",
+    "stats": [
+     2,
+     3,
+     3,
+     2,
+     4
+    ]
+   },
+   {
+    "id": 4,
+    "name": "Sniper Gun",
+    "stats": [
+     3,
+     5,
+     1,
+     1,
+     4
+    ]
+   },
+   {
+    "id": 5,
+    "name": "Stun Gun",
+    "stats": [
+     2,
+     5,
+     1,
+     5,
+     4
+    ]
+   },
+   {
+    "id": 6,
+    "name": "Hornet Gun",
+    "stats": [
+     3,
+     2,
+     4,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 7,
+    "name": "Flame Gun",
+    "stats": [
+     3,
+     3,
+     2,
+     3,
+     4
+    ]
+   },
+   {
+    "id": 8,
+    "name": "Dragon Gun",
+    "stats": [
+     4,
+     2,
+     3,
+     1,
+     4
+    ]
+   },
+   {
+    "id": 9,
+    "name": "Splash Gun",
+    "stats": [
+     1,
+     2,
+     1,
+     5,
+     2
+    ]
+   },
+   {
+    "id": 10,
+    "name": "Left Arc Gun",
+    "stats": [
+     3,
+     4,
+     2,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 11,
+    "name": "Right Arc Gun",
+    "stats": [
+     3,
+     4,
+     2,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 12,
+    "name": "Shotgun",
+    "stats": [
+     5,
+     5,
+     1,
+     1,
+     5
+    ]
+   },
+   {
+    "id": 13,
+    "name": "Rayfall Gun",
+    "stats": [
+     3,
+     3,
+     4,
+     2,
+     2
+    ]
+   },
+   {
+    "id": 14,
+    "name": "Bubble Gun",
+    "stats": [
+     2,
+     1,
+     5,
+     3,
+     4
+    ]
+   },
+   {
+    "id": 15,
+    "name": "Eagle Gun",
+    "stats": [
+     2,
+     4,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 16,
+    "name": "V Laser Gun",
+    "stats": [
+     3,
+     4,
+     1,
+     3,
+     4
+    ]
+   },
+   {
+    "id": 17,
+    "name": "Magnum Gun",
+    "stats": [
+     4,
+     5,
+     1,
+     1,
+     5
+    ]
+   },
+   {
+    "id": 18,
+    "name": "Needle Gun",
+    "stats": [
+     2,
+     3,
+     1,
+     4,
+     4
+    ]
+   },
+   {
+    "id": 19,
+    "name": "Starshot Gun",
+    "stats": [
+     2,
+     3,
+     2,
+     4,
+     2
+    ]
+   },
+   {
+    "id": 20,
+    "name": "Glider Gun",
+    "stats": [
+     3,
+     2,
+     5,
+     3,
+     1
+    ]
+   },
+   {
+    "id": 21,
+    "name": "Homing Star Gun",
+    "stats": [
+     3,
+     3,
+     4,
+     2,
+     2
+    ]
+   },
+   {
+    "id": 22,
+    "name": "Trap Gun",
+    "stats": [
+     3,
+     3,
+     2,
+     4,
+     1
+    ]
+   },
+   {
+    "id": 23,
+    "name": "Drill Gun",
+    "stats": [
+     3,
+     5,
+     2,
+     3,
+     4
+    ]
+   },
+   {
+    "id": 24,
+    "name": "Titan Gun",
+    "stats": [
+     1,
+     1,
+     1,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 25,
+    "name": "Claw Gun",
+    "stats": [
+     1,
+     3,
+     5,
+     4,
+     1
+    ]
+   },
+   {
+    "id": 26,
+    "name": "Knuckle Gun",
+    "stats": [
+     5,
+     5,
+     1,
+     5,
+     5
+    ]
+   },
+   {
+    "id": 27,
+    "name": "Afterburner Gun",
+    "stats": [
+     4,
+     4,
+     2,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 28,
+    "name": "Blade Gun",
+    "stats": [
+     1,
+     3,
+     1,
+     5,
+     1
+    ]
+   },
+   {
+    "id": 29,
+    "name": "Meteor Storm Gun",
+    "stats": [
+     2,
+     3,
+     2,
+     3,
+     1
+    ]
+   },
+   {
+    "id": 30,
+    "name": "Twin Fang Gun",
+    "stats": [
+     4,
+     4,
+     3,
+     3,
+     2
+    ]
+   },
+   {
+    "id": 31,
+    "name": "Gravity Gun",
+    "stats": [
+     4,
+     3,
+     1,
+     4,
+     4
+    ]
+   },
+   {
+    "id": 32,
+    "name": "Phoenix Gun",
+    "stats": [
+     3,
+     5,
+     2,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 33,
+    "name": "Can Gun",
+    "stats": [
+     3,
+     1,
+     1,
+     2,
+     2
+    ],
+    "tag": "can"
+   },
+   {
+    "id": 34,
+    "name": "Left Pulse Gun",
+    "stats": [
+     2,
+     3,
+     4,
+     3,
+     2
+    ]
+   },
+   {
+    "id": 35,
+    "name": "Right Pulse Gun",
+    "stats": [
+     2,
+     3,
+     4,
+     3,
+     2
+    ]
+   },
+   {
+    "id": 36,
+    "name": "Sword Storm Gun",
+    "stats": [
+     3,
+     5,
+     2,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 37,
+    "name": "Ion Gun",
+    "stats": [
+     2,
+     2,
+     5,
+     4,
+     2
+    ]
+   },
+   {
+    "id": 38,
+    "name": "Flare Gun",
+    "stats": [
+     4,
+     4,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 39,
+    "name": "Left 5-Way Gun",
+    "stats": [
+     2,
+     4,
+     1,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 40,
+    "name": "Right 5-Way Gun",
+    "stats": [
+     2,
+     4,
+     1,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 41,
+    "name": "Halo Gun",
+    "stats": [
+     3,
+     3,
+     4,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 42,
+    "name": "Wave Laser Gun",
+    "stats": [
+     1,
+     5,
+     1,
+     5,
+     1
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 43,
+    "name": "X Laser Gun",
+    "stats": [
+     4,
+     5,
+     4,
+     3,
+     4
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 44,
+    "name": "Crystal Strike Gun",
+    "stats": [
+     5,
+     4,
+     4,
+     4,
+     4
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 45,
+    "name": "Wyrm Gun",
+    "stats": [
+     5,
+     4,
+     3,
+     2,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 46,
+    "name": "Raptor Gun",
+    "stats": [
+     4,
+     4,
+     4,
+     4,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 47,
+    "name": "Waxing Arc Gun",
+    "stats": [
+     4,
+     4,
+     4,
+     2,
+     4
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 48,
+    "name": "Waning Arc Gun",
+    "stats": [
+     4,
+     4,
+     4,
+     2,
+     4
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 49,
+    "name": "Rahu l Gun",
+    "stats": [
+     4,
+     4,
+     4,
+     3,
+     4
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 50,
+    "name": "Rahu ll Gun",
+    "stats": [
+     5,
+     4,
+     3,
+     4,
+     4
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 51,
+    "name": "Rahu lll Gun",
+    "stats": [
+     5,
+     4,
+     2,
+     3,
+     5
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 52,
+    "name": "Dummy Gun 1",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 53,
+    "name": "Dummy Gun 2",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 54,
+    "name": "Dummy Gun 3",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 55,
+    "name": "Dummy Gun 4",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 56,
+    "name": "Dummy Gun 5",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 57,
+    "name": "Dummy Gun 6",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 58,
+    "name": "Dummy Gun 7",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 59,
+    "name": "Dummy Gun 8",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 60,
+    "name": "Dummy Gun 9",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 61,
+    "name": "Dummy Gun 10",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 62,
+    "name": "Dummy Gun 11",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   },
+   {
+    "id": 63,
+    "name": "Dummy Gun 12",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   }
+  ],
+  "bomb": [
+   {
+    "id": 0,
+    "name": "Standard Bomb",
+    "stats": [
+     4,
+     3,
+     3,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 1,
+    "name": "Standard Bomb F",
+    "stats": [
+     4,
+     3,
+     3,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 2,
+    "name": "Standard Bomb S",
+    "stats": [
+     3,
+     3,
+     2,
+     2,
+     2
+    ]
+   },
+   {
+    "id": 3,
+    "name": "Wave Bomb",
+    "stats": [
+     3,
+     2,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 4,
+    "name": "Straight Bomb G",
+    "stats": [
+     2,
+     4,
+     2,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 5,
+    "name": "Straight Bomb S",
+    "stats": [
+     2,
+     4,
+     2,
+     2,
+     2
+    ]
+   },
+   {
+    "id": 6,
+    "name": "Straight Bomb T",
+    "stats": [
+     1,
+     4,
+     2,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 7,
+    "name": "Right Flank Bomb H",
+    "stats": [
+     3,
+     3,
+     4,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 8,
+    "name": "Left Flank Bomb H",
+    "stats": [
+     3,
+     3,
+     4,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 9,
+    "name": "Right Wave Bomb",
+    "stats": [
+     2,
+     2,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 10,
+    "name": "Left Wave Bomb",
+    "stats": [
+     2,
+     2,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 11,
+    "name": "Burrow Bomb D",
+    "stats": [
+     4,
+     3,
+     4,
+     5,
+     3
+    ]
+   },
+   {
+    "id": 12,
+    "name": "Burrow Bomb P",
+    "stats": [
+     4,
+     3,
+     4,
+     5,
+     3
+    ]
+   },
+   {
+    "id": 13,
+    "name": "Freeze Bomb",
+    "stats": [
+     1,
+     3,
+     2,
+     4,
+     1
+    ]
+   },
+   {
+    "id": 14,
+    "name": "Tomahawk Bomb B",
+    "stats": [
+     3,
+     2,
+     4,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 15,
+    "name": "Tomahawk Bomb G",
+    "stats": [
+     3,
+     2,
+     3,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 16,
+    "name": "Gemini Bomb B",
+    "stats": [
+     2,
+     3,
+     1,
+     3,
+     2
+    ]
+   },
+   {
+    "id": 17,
+    "name": "Gemini Bomb P",
+    "stats": [
+     2,
+     3,
+     1,
+     4,
+     2
+    ]
+   },
+   {
+    "id": 18,
+    "name": "Submarine Bomb D",
+    "stats": [
+     5,
+     1,
+     4,
+     5,
+     3
+    ]
+   },
+   {
+    "id": 19,
+    "name": "Submarine Bomb P",
+    "stats": [
+     5,
+     1,
+     3,
+     5,
+     3
+    ]
+   },
+   {
+    "id": 20,
+    "name": "Crescent Bomb P",
+    "stats": [
+     3,
+     1,
+     3,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 21,
+    "name": "Crescent Bomb C",
+    "stats": [
+     2,
+     1,
+     3,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 22,
+    "name": "Dual Bomb",
+    "stats": [
+     3,
+     3,
+     3,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 23,
+    "name": "Dual Bomb C",
+    "stats": [
+     2,
+     3,
+     3,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 24,
+    "name": "Acrobat Bomb",
+    "stats": [
+     0,
+     5,
+     4,
+     2,
+     1
+    ]
+   },
+   {
+    "id": 25,
+    "name": "Delta Bomb",
+    "stats": [
+     2,
+     4,
+     1,
+     2,
+     2
+    ]
+   },
+   {
+    "id": 26,
+    "name": "Wall Bomb",
+    "stats": [
+     4,
+     4,
+     3,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 27,
+    "name": "Smash Bomb",
+    "stats": [
+     4,
+     5,
+     3,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 28,
+    "name": "Double Mine Bomb",
+    "stats": [
+     2,
+     3,
+     3,
+     3,
+     1
+    ]
+   },
+   {
+    "id": 29,
+    "name": "Geo Trap Bomb",
+    "stats": [
+     4,
+     4,
+     4,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 30,
+    "name": "Titan Bomb",
+    "stats": [
+     1,
+     1,
+     5,
+     3,
+     5
+    ]
+   },
+   {
+    "id": 31,
+    "name": "Can Bomb",
+    "stats": [
+     2,
+     3,
+     2,
+     2,
+     3
+    ],
+    "tag": "can"
+   },
+   {
+    "id": 32,
+    "name": "Standard Bomb K",
+    "stats": [
+     3,
+     3,
+     2,
+     2,
+     5
+    ]
+   },
+   {
+    "id": 33,
+    "name": "Submarine Bomb K",
+    "stats": [
+     4,
+     1,
+     3,
+     3,
+     5
+    ]
+   },
+   {
+    "id": 34,
+    "name": "Crescent Bomb K",
+    "stats": [
+     4,
+     1,
+     3,
+     3,
+     5
+    ]
+   },
+   {
+    "id": 35,
+    "name": "Standard Bomb X",
+    "stats": [
+     2,
+     3,
+     2,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 36,
+    "name": "Treble Bomb",
+    "stats": [
+     4,
+     3,
+     3,
+     3,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 37,
+    "name": "Wyvern Bomb",
+    "stats": [
+     2,
+     3,
+     3,
+     2,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 38,
+    "name": "Waxing Arc Bomb",
+    "stats": [
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 39,
+    "name": "Waning Arc Bomb",
+    "stats": [
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 40,
+    "name": "Grand Cross Bomb",
+    "stats": [
+     5,
+     3,
+     4,
+     3,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 41,
+    "name": "Dummy Bomb 1",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 42,
+    "name": "Dummy Bomb 2",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 43,
+    "name": "Dummy Bomb 3",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 44,
+    "name": "Dummy Bomb 4",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 45,
+    "name": "Dummy Bomb 5",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 46,
+    "name": "Dummy Bomb 6",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 47,
+    "name": "Dummy Bomb 7",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 48,
+    "name": "Dummy Bomb 8",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 49,
+    "name": "Dummy Bomb 9",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 50,
+    "name": "Dummy Bomb 10",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 51,
+    "name": "Dummy Bomb 11",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     5
+    ],
+    "dummy": true
+   }
+  ],
+  "pod": [
+   {
+    "id": 0,
+    "name": "Standard Pod",
+    "stats": [
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 1,
+    "name": "Seeker Pod F",
+    "stats": [
+     2,
+     1,
+     5,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 2,
+    "name": "Seeker Pod G",
+    "stats": [
+     2,
+     1,
+     5,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 3,
+    "name": "Speed Pod D",
+    "stats": [
+     3,
+     5,
+     1,
+     4,
+     5
+    ]
+   },
+   {
+    "id": 4,
+    "name": "Speed Pod P",
+    "stats": [
+     3,
+     5,
+     1,
+     4,
+     5
+    ]
+   },
+   {
+    "id": 5,
+    "name": "Cockroach Pod G",
+    "stats": [
+     2,
+     4,
+     4,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 6,
+    "name": "Cockroach Pod H",
+    "stats": [
+     2,
+     4,
+     4,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 7,
+    "name": "Dolphin Pod",
+    "stats": [
+     3,
+     4,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 8,
+    "name": "Dolphin Pod G",
+    "stats": [
+     3,
+     4,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 9,
+    "name": "Spider Pod",
+    "stats": [
+     2,
+     3,
+     2,
+     5,
+     3
+    ]
+   },
+   {
+    "id": 10,
+    "name": "Spider Pod G",
+    "stats": [
+     2,
+     3,
+     2,
+     5,
+     3
+    ]
+   },
+   {
+    "id": 11,
+    "name": "Sky Freeze Pod",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     4
+    ]
+   },
+   {
+    "id": 12,
+    "name": "Ground Freeze Pod",
+    "stats": [
+     1,
+     2,
+     3,
+     4,
+     4
+    ]
+   },
+   {
+    "id": 13,
+    "name": "Feint Pod F",
+    "stats": [
+     2,
+     4,
+     4,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 14,
+    "name": "Feint Pod G",
+    "stats": [
+     2,
+     4,
+     4,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 15,
+    "name": "Float Pod F",
+    "stats": [
+     2,
+     2,
+     4,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 16,
+    "name": "Jumping Pod B",
+    "stats": [
+     3,
+     2,
+     4,
+     4,
+     5
+    ]
+   },
+   {
+    "id": 17,
+    "name": "Jumping Pod G",
+    "stats": [
+     3,
+     2,
+     4,
+     4,
+     3
+    ]
+   },
+   {
+    "id": 18,
+    "name": "Diving Pod",
+    "stats": [
+     2,
+     3,
+     4,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 19,
+    "name": "Wave Pod",
+    "stats": [
+     2,
+     4,
+     2,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 20,
+    "name": "Satellite Pod",
+    "stats": [
+     3,
+     1,
+     3,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 21,
+    "name": "Satellite Pod H",
+    "stats": [
+     3,
+     1,
+     3,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 22,
+    "name": "Beast Pod F",
+    "stats": [
+     2,
+     2,
+     4,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 23,
+    "name": "Trio Pod H",
+    "stats": [
+     4,
+     3,
+     3,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 24,
+    "name": "Wall Pod",
+    "stats": [
+     3,
+     5,
+     1,
+     3,
+     4
+    ]
+   },
+   {
+    "id": 25,
+    "name": "Reflection Pod",
+    "stats": [
+     3,
+     3,
+     1,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 26,
+    "name": "Caboose Pod C",
+    "stats": [
+     5,
+     3,
+     3,
+     5,
+     3
+    ]
+   },
+   {
+    "id": 27,
+    "name": "Caboose Pod T",
+    "stats": [
+     5,
+     3,
+     3,
+     5,
+     3
+    ]
+   },
+   {
+    "id": 28,
+    "name": "Twin Flank Pod F",
+    "stats": [
+     3,
+     3,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 29,
+    "name": "Twin Flank Pod G",
+    "stats": [
+     3,
+     3,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 30,
+    "name": "Umbrella Pod",
+    "stats": [
+     3,
+     4,
+     2,
+     4,
+     1
+    ]
+   },
+   {
+    "id": 31,
+    "name": "Throwing Pod D",
+    "stats": [
+     3,
+     4,
+     2,
+     3,
+     5
+    ]
+   },
+   {
+    "id": 32,
+    "name": "Throwing Pod P",
+    "stats": [
+     3,
+     4,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "id": 33,
+    "name": "Double Wave Pod",
+    "stats": [
+     2,
+     3,
+     1,
+     2,
+     3
+    ]
+   },
+   {
+    "id": 34,
+    "name": "Titan Pod",
+    "stats": [
+     1,
+     1,
+     1,
+     5,
+     5
+    ]
+   },
+   {
+    "id": 35,
+    "name": "Can Pod",
+    "stats": [
+     2,
+     3,
+     3,
+     1,
+     3
+    ],
+    "tag": "can"
+   },
+   {
+    "id": 36,
+    "name": "Standard Pod F",
+    "stats": [
+     2,
+     3,
+     3,
+     4,
+     4
+    ]
+   },
+   {
+    "id": 37,
+    "name": "Caboose Pod X",
+    "stats": [
+     2,
+     3,
+     3,
+     5,
+     3
+    ]
+   },
+   {
+    "id": 38,
+    "name": "Cheetah Pod",
+    "stats": [
+     3,
+     5,
+     1,
+     4,
+     5
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 39,
+    "name": "Wolf Spider Pod",
+    "stats": [
+     2,
+     5,
+     3,
+     5,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 40,
+    "name": "Orca Pod",
+    "stats": [
+     3,
+     4,
+     4,
+     3,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 41,
+    "name": "Penumbra l",
+    "stats": [
+     2,
+     3,
+     5,
+     3,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 42,
+    "name": "Penumbra ll",
+    "stats": [
+     2,
+     4,
+     5,
+     4,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 43,
+    "name": "Penumbra lll",
+    "stats": [
+     3,
+     5,
+     5,
+     4,
+     3
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 44,
+    "name": "Dummy Pod 1",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 45,
+    "name": "Dummy Pod 2",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 46,
+    "name": "Dummy Pod 3",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 47,
+    "name": "Dummy Pod 4",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 48,
+    "name": "Dummy Pod 5",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 49,
+    "name": "Dummy Pod 6",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 50,
+    "name": "Dummy Pod 7",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 51,
+    "name": "Dummy Pod 8",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 52,
+    "name": "Dummy Pod 9",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 53,
+    "name": "Dummy Pod 10",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 54,
+    "name": "Dummy Pod 11",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 55,
+    "name": "Dummy Pod 12",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 56,
+    "name": "Dummy Pod 13",
+    "stats": [
+     1,
+     2,
+     3,
+     0,
+     0
+    ],
+    "dummy": true
+   }
+  ],
+  "legs": [
+   {
+    "id": 0,
+    "name": "Standard Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 1,
+    "name": "High Jump Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 2,
+    "name": "Ground Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 3,
+    "name": "Formula Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 4,
+    "name": "Stabilizer Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 5,
+    "name": "Short Thrust Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 6,
+    "name": "Long Thrust Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 7,
+    "name": "Quick Jump Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 8,
+    "name": "Feather Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 9,
+    "name": "Wide Jump Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 10,
+    "name": "Can Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "tag": "can"
+   },
+   {
+    "id": 11,
+    "name": "Booster Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "id": 12,
+    "name": "Swallow Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 13,
+    "name": "Raven Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 14,
+    "name": "Eclipse Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 15,
+    "name": "Ultimate Legs",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "tag": "illegal"
+   },
+   {
+    "id": 16,
+    "name": "Dummy Legs 1",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 17,
+    "name": "Dummy Legs 2",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 18,
+    "name": "Dummy Legs 3",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 19,
+    "name": "Dummy Legs 4",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 20,
+    "name": "Dummy Legs 5",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 21,
+    "name": "Dummy Legs 6",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 22,
+    "name": "Dummy Legs 7",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 23,
+    "name": "Dummy Legs 8",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 24,
+    "name": "Dummy Legs 9",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 25,
+    "name": "Dummy Legs 10",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 26,
+    "name": "Dummy Legs 11",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 27,
+    "name": "Dummy Legs 12",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   },
+   {
+    "id": 28,
+    "name": "Dummy Legs 13",
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "dummy": true
+   }
+  ]
+ },
+ "alternates": [
+  {
+   "category": "body",
+   "id": 30,
+   "record": 236,
+   "stats": [
+    5,
+    6,
+    5,
+    8,
+    9
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "body",
+   "id": 31,
+   "record": 237,
+   "stats": [
+    7,
+    6,
+    5,
+    9,
+    10
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "body",
+   "id": 32,
+   "record": 238,
+   "stats": [
+    10,
+    10,
+    4,
+    10,
+    10
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "gun",
+   "id": 49,
+   "record": 239,
+   "stats": [
+    4,
+    4,
+    4,
+    3,
+    4
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "gun",
+   "id": 50,
+   "record": 240,
+   "stats": [
+    5,
+    4,
+    3,
+    4,
+    4
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "gun",
+   "id": 51,
+   "record": 241,
+   "stats": [
+    5,
+    4,
+    2,
+    3,
+    5
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "bomb",
+   "id": 40,
+   "record": 242,
+   "stats": [
+    5,
+    3,
+    4,
+    3,
+    3
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "pod",
+   "id": 41,
+   "record": 243,
+   "stats": [
+    2,
+    3,
+    5,
+    3,
+    3
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "pod",
+   "id": 42,
+   "record": 244,
+   "stats": [
+    2,
+    4,
+    5,
+    4,
+    3
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "pod",
+   "id": 43,
+   "record": 245,
+   "stats": [
+    3,
+    5,
+    5,
+    4,
+    3
+   ],
+   "same_as_main": true
+  },
+  {
+   "category": "legs",
+   "id": 15,
+   "record": 246,
+   "stats": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "same_as_main": true
+  }
+ ]
+}
