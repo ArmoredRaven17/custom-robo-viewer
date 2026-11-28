@@ -56,7 +56,10 @@ function applyMat(inst, m, f, alphaMul = 1) {
   const ev = (k, d) => (T[k] ? fobjEval(T[k], f) : d);
   const mat = inst.material;
   const rm = m.rm, alphaSrc = (rm >> 13) & 3;           // 1 material, 2 vertex, 3 both
-  mat.opacity = (alphaSrc & 1 ? THREE.MathUtils.clamp(ev('alpha', m.alpha), 0, 1) : 1) * alphaMul;
+  // The MatAnim alpha track is TRANSPARENCY (READ, 0x8018b7a0: mat+0xC = clamp(1.0 - key, 0, 1)); the material's
+  // own alpha field is opacity. Read as opacity, every flash ran inverted (Stun Gun's shock hidden, a solid shell shown).
+  const alpha = T.alpha ? 1 - fobjEval(T.alpha, f) : m.alpha;
+  mat.opacity = (alphaSrc & 1 ? THREE.MathUtils.clamp(alpha, 0, 1) : 1) * alphaMul;
   if (alphaMul < 1 && !mat.transparent) { mat.transparent = true; mat.needsUpdate = true; }
   if (rm & 1) mat.color.setRGB(ev('difR', m.diffuse[0] / 255), ev('difG', m.diffuse[1] / 255), ev('difB', m.diffuse[2] / 255), THREE.SRGBColorSpace);
   else mat.color.setRGB(1, 1, 1);

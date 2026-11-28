@@ -17,7 +17,7 @@
 // Viewer stand-ins (not read): no walls, arena edge or aim steering; the target is the gun preview's sphere (hit
 // centre) with its feet on the floor; the blast animation rate (0.5 frames/tick) and the bomb's (1.5) are INFERRED.
 import * as THREE from 'three';
-import { effectInstance } from './attack.js?v=16';
+import { effectInstance } from './attack.js?v=17';
 
 const TICK = 1 / 60;
 const UP = new THREE.Vector3(0, 1, 0);
